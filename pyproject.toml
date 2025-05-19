@@ -1,0 +1,44 @@
+[project]
+name = "compiled-knowledge"
+version = "4.0.0a9"
+description = "A Python package for compiling and querying discrete probabilistic graphical models."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
+authors = [
+    {name = "Barry Drake", email ="barry@compiledknowledge.org"},
+]
+dependencies = [
+    "llvmlite",
+    "numpy",
+]
+requires-python = ">= 3.12"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/ropeless/compiled_knowledge"
+Issues = "https://github.com/ropeless/compiled_knowledge/issues"
+
+[tool.poetry]
+package-mode = false  # only using poetry for dependency management
+
+[tool.poetry.group.dev.dependencies]
+cython = "^3.0.0"
+jupyter = "*"
+setuptools = "*"
+build = "*"
+jupyter-book = "*"
+twine = "*"
+
+[tool.poetry.group.test.dependencies]
+coverage = "*"
+
+[build-system]
+requires = ["setuptools", "cython", "numpy"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]

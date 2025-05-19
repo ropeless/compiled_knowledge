@@ -1,0 +1,15 @@
+# Table of contents
+# Learn more at https://jupyterbook.org/customize/toc.html
+
+format: jb-book
+root: 0_front_matter
+chapters:
+- file: 1_introduction
+- file: 2_background
+- file: 3_PGM_basics
+- file: 4_PGM_advanced
+- file: 5_example_PGMs
+- file: 6_circuits_and_programs
+- file: 7_PGM_compilers_advanced
+- file: 8_circuit_compilers_advanced
+- file: 9_sampling

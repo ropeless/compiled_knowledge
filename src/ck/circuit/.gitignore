@@ -1,0 +1,3 @@
+circuit.c
+circuit.*.so
+circuit.*.pyd

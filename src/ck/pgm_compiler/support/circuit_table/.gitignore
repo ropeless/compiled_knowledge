@@ -1,0 +1,3 @@
+circuit_table.c
+circuit_table.*.so
+circuit_table.*.pyd

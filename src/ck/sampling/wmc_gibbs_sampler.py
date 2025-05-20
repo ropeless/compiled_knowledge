@@ -65,12 +65,16 @@ class WMCGibbsSampler(Sampler):
             if skip == 0:
                 while True:
                     self._next_sample_gibbs(sample_rvs, slots_1, program_buffer, prs, state, rand)
+                    # We know the yield function will always provide either ints or Instances
+                    # noinspection PyTypeChecker
                     yield yield_f(state)
             else:
                 while True:
                     for _ in range(skip):
                         self._next_sample_gibbs(sample_rvs, slots_1, program_buffer, prs, state, rand)
                     self._next_sample_gibbs(sample_rvs, slots_1, program_buffer, prs, state, rand)
+                    # We know the yield function will always provide either ints or Instances
+                    # noinspection PyTypeChecker
                     yield yield_f(state)
 
         else:
@@ -79,6 +83,8 @@ class WMCGibbsSampler(Sampler):
                 for _ in range(skip):
                     self._next_sample_gibbs(sample_rvs, slots_1, program_buffer, prs, state, rand)
                 self._next_sample_gibbs(sample_rvs, slots_1, program_buffer, prs, state, rand)
+                # We know the yield function will always provide either ints or Instances
+                # noinspection PyTypeChecker
                 yield yield_f(state)
                 if rand.random() < pr_restart:
                     # Set an initial system state

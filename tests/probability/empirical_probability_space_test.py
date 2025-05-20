@@ -1,14 +1,16 @@
-from unittest import TestCase, main as test_main
+from unittest import main as test_main
 
 from ck.pgm import PGM
 from ck.probability.empirical_probability_space import EmpiricalProbabilitySpace
+from tests.helpers.unittest_fixture import Fixture
 
 
-class TestEmpiricalProbabilitySpace(TestCase):
+class TestEmpiricalProbabilitySpace(Fixture):
 
     def test_no_rv(self):
         pr = EmpiricalProbabilitySpace((), ())
 
+        self.assertArrayEqual(pr.rvs, [])
         self.assertEqual(pr.z, 0)
         self.assertEqual(pr.wmc(), 0)
 
@@ -21,6 +23,7 @@ class TestEmpiricalProbabilitySpace(TestCase):
             ([sample] for sample in samples)
         )
 
+        self.assertArrayEqual(pr.rvs, [x])
         self.assertEqual(pr.z, 10)
         self.assertEqual(pr.wmc(), 10)
 
@@ -53,6 +56,7 @@ class TestEmpiricalProbabilitySpace(TestCase):
 
         pr = EmpiricalProbabilitySpace((x, y), samples)
 
+        self.assertArrayEqual(pr.rvs, [x, y])
         self.assertEqual(pr.z, 10)
         self.assertEqual(pr.wmc(), 10)
 

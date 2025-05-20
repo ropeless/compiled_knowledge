@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Sequence, List, Dict
 
-from ck.circuit import CircuitNode
+from ck.circuit import CircuitNode, Circuit
 from ck.pgm import RandomVariable, Indicator
 from ck.pgm_circuit.slot_map import SlotMap, SlotKey
 from ck.utils.np_extras import NDArray
@@ -46,19 +46,21 @@ class PGMCircuit:
 
     def dump(self, *, prefix: str = '', indent: str = '    ') -> None:
         """
-        Print a dump of the Join Tree.
+        Print a dump of the circuit.
         This is intended for debugging and demonstration purposes.
-
-        Each cluster is printed as: {separator rvs} | {non-separator rvs}.
 
         Args:
             prefix: optional prefix for indenting all lines.
             indent: additional prefix to use for extra indentation.
         """
-        # Name the circuit variables
-        circuit = self.circuit_top.circuit
+
+        # We infer names for the circuit variables, either as an indicator or as a parameter.
+        # The `var_names` will be passed to `circuit.dump`.
+
+        circuit: Circuit = self.circuit_top.circuit
         var_names: List[str] = [''] * circuit.number_of_vars
 
+        # Name the circuit variables that are indicators
         rvs_by_idx: Dict[int, RandomVariable] = {rv.idx: rv for rv in self.rvs}
         slot_key: SlotKey
         slot: int
@@ -68,8 +70,10 @@ class PGMCircuit:
                 state_idx = slot_key.state_idx
                 var_names[slot] = f'{rv.name!r}[{state_idx}] {rv.states[state_idx]!r}'
 
-        for slot, param_value in enumerate(self.parameter_values, start=self.number_of_indicators):
-            var_names[slot] = f'param {param_value}'
+        # Name the circuit variables that are parameters
+        for i, param_value in enumerate(self.parameter_values):
+            slot = i + self.number_of_indicators
+            var_names[slot] = f'param[{i}] = {param_value}'
 
-        # Show all the slots
+        # Dump the circuit
         circuit.dump(prefix=prefix, indent=indent, var_names=var_names)

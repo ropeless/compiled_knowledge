@@ -1,12 +1,11 @@
 from abc import ABC, abstractmethod
-from random import random
 
 from ck.pgm import PGM
 
 
-class PGMTestCases(ABC):
+class BNTestCases(ABC):
     """
-    This is a test case mix-in for running a variety of PGMs through a check function.
+    This is a test case mix-in for running a variety of Bayesian NetworkPGMs through a check function.
     """
 
     @abstractmethod
@@ -14,12 +13,91 @@ class PGMTestCases(ABC):
         ...
 
     def test_empty(self):
-        pgm = PGM()
+        pgm = PGM('PGM test_empty')
+        self.check_pgm(pgm)
+
+    def test_one_var_one_factor(self) -> None:
+        pgm = PGM('PGM test_one_var_one_factor')
+        x = pgm.new_rv('x', 2)
+        pgm.new_factor(x).set_dense().set_flat(0.1, 0.9)
+
+        self.check_pgm(pgm)
+
+    def test_two_var_two_factor(self) -> None:
+        pgm = PGM('PGM test_two_var_two_factor')
+        x = pgm.new_rv('x', 2)
+        y = pgm.new_rv('y', 3)
+        pgm.new_factor(x, y).set_dense().set_flat(0.1, 0.2, 0.3, 0.9, 0.8, 0.7)
+        pgm.new_factor(y).set_dense().set_flat(0.3, 0.1, 0.6)
+
+        self.check_pgm(pgm)
+
+    def test_shared_function(self):
+        pgm = PGM('PGM test_shared_function')
+        x1 = pgm.new_rv('x1', 2)
+        x2 = pgm.new_rv('x2', 3)
+        x3 = pgm.new_rv('x3', 2)
+        x4 = pgm.new_rv('x4', 3)
+
+        f = pgm.new_factor(x1, x2).set_dense().set_flat(0.1, 0.2, 0.3, 0.9, 0.8, 0.7)
+        pgm.new_factor(x3, x4).function = f
+
+        pgm.new_factor(x2).set_dense().set_uniform()
+        pgm.new_factor(x4).set_dense().set_uniform()
+
+        self.check_pgm(pgm)
+
+    def test_simple_shared_function(self):
+        pgm = PGM('PGM test_simple_shared_function')
+        x0 = pgm.new_rv('x0', 2)
+        x1 = pgm.new_rv('x1', 2)
+
+        f = pgm.new_factor(x0).set_dense().set_flat(0.1, 0.9)
+        pgm.new_factor(x1).function = f
+
+        self.check_pgm(pgm)
+
+    def test_non_ascii_strings(self):
+        pgm = PGM('PGM test_non_ascii_strings')
+        rv = pgm.new_rv('Facility', (
+            # St Vincent's
+            b'\x53\x74\x20\x56\x69\x6E\x63\x65\x6E\x74\x92\x73\x20'.decode('cp1252'),
+            # Sydney Children's
+            b'\x53\x79\x64\x6E\x65\x79\x20\x43\x68\x69\x6C\x64\x72\x65\x6E\x92\x73'.decode('cp1252')
+        ))
+        pgm.new_factor(rv).set_dense().set_uniform()
+
+        self.check_pgm(pgm)
+
+
+class PGMTestCases(BNTestCases):
+    """
+    This is a test case mix-in for running a variety of PGMs through a check function.
+    This includes all the Bayesian network cases from BNTestCases, plus other test cases.
+    """
+
+    @abstractmethod
+    def check_pgm(self, pgm: PGM) -> None:
+        ...
+
+    def test_zero(self):
+        pgm = PGM('PGM test_zero')
+        x = pgm.new_rv('x', 2)
+        pgm.new_factor(x)  # leave as the zero potential function
+
+        self.check_pgm(pgm)
+
+    def test_two_var_one_factor(self) -> None:
+        pgm = PGM('PGM test_two_var_one_factor')
+        x = pgm.new_rv('x', 2)
+        y = pgm.new_rv('y', 3)
+        pgm.new_factor(x, y).set_dense().set_flat(0.1, 0.2, 0.3, 0.4, 0.5, 0.6)
+
         self.check_pgm(pgm)
 
     def test_stress(self):
         # Many different kinds of random variables, factors, and potential functions.
-        pgm = PGM('test_stress PGM')
+        pgm = PGM('PGM test_stress')
 
         no_name = pgm.new_rv('', 2)
         x1 = pgm.new_rv('x1', 2)
@@ -70,43 +148,5 @@ class PGMTestCases(ABC):
         # Two factors on the same random variables
         pgm.new_factor(C, E).set_sparse()
         pgm.new_factor(C, E).set_sparse()
-
-        self.check_pgm(pgm)
-
-    def test_one_var_one_factor(self) -> None:
-        pgm = PGM()
-        x = pgm.new_rv('x', 2)
-        pgm.new_factor(x).set_dense().set_flat(0.1, 0.9)
-
-        self.check_pgm(pgm)
-
-    def test_two_var_one_factor(self) -> None:
-        pgm = PGM()
-        x = pgm.new_rv('x', 2)
-        y = pgm.new_rv('y', 3)
-        pgm.new_factor(x, y).set_dense().set_flat(0.1, 0.2, 0.3, 0.4, 0.5, 0.6)
-
-        self.check_pgm(pgm)
-
-    def test_shared_function(self):
-        pgm = PGM()
-        x1 = pgm.new_rv('x1', 2)
-        x2 = pgm.new_rv('x2', 3)
-        x3 = pgm.new_rv('x3', 2)
-        x4 = pgm.new_rv('x4', 3)
-
-        f = pgm.new_factor(x1, x2).set_dense().set_stream(random)
-        pgm.new_factor(x3, x4).function = f
-
-        self.check_pgm(pgm)
-
-    def test_non_ascii_strings(self):
-        pgm = PGM('a name')
-        pgm.new_rv('Facility', (
-            # St Vincent's
-            b'\x53\x74\x20\x56\x69\x6E\x63\x65\x6E\x74\x92\x73\x20'.decode('cp1252'),
-            # Sydney Children's
-            b'\x53\x79\x64\x6E\x65\x79\x20\x43\x68\x69\x6C\x64\x72\x65\x6E\x92\x73'.decode('cp1252')
-        ))
 
         self.check_pgm(pgm)

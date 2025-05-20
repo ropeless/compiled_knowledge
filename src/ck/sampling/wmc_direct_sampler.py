@@ -8,7 +8,7 @@ from ck.program.program_buffer import ProgramBuffer
 from ck.program.raw_program import RawProgram
 from ck.sampling.sampler import Sampler
 from ck.sampling.sampler_support import SampleRV, YieldF, SamplerInfo
-from ck.utils.np_extras import NDArrayNumeric
+from ck.utils.np_extras import NDArrayNumeric, NDArrayStates
 from ck.utils.random_extras import Random
 
 
@@ -52,7 +52,7 @@ class WMCDirectSampler(Sampler):
             return program_buffer.compute().item()
 
         # Set up working memory buffers
-        states = np.zeros(len(sample_rvs), dtype=self._state_dtype)
+        states: NDArrayStates = np.zeros(len(sample_rvs), dtype=self._state_dtype)
         buff_slots = np.zeros(self._max_number_of_states, dtype=np.uintp)
         buff_states = np.zeros(self._max_number_of_states, dtype=self._state_dtype)
 
@@ -153,6 +153,8 @@ class WMCDirectSampler(Sampler):
                 slots[slot] = 1
                 states[sample_rv.index] = state
 
+            # We know the yield function will always provide either ints or Instances
+            # noinspection PyTypeChecker
             yield yield_f(states)
 
             # Reset the one slots for the next iteration.

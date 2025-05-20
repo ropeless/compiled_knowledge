@@ -1,4 +1,4 @@
-from typing import Tuple, Iterator, Sequence, Dict, Iterable
+from typing import Tuple, Sequence, Dict, Iterable
 
 from ck.pgm import RandomVariable, rv_instances, Instance, rv_instances_as_indicators, Indicator, ParamId
 from ck.pgm_circuit.slot_map import SlotMap, SlotKey
@@ -30,11 +30,13 @@ class ProgramWithSlotmap:
                 has a length and rv[i] is a unique 'indicator' across all rvs.
             precondition: conditions on rvs that are compiled into the program.
 
+        Raises:
+            ValueError: if rvs contains duplicates.
         """
         self._program_buffer: ProgramBuffer = program_buffer
         self._slot_map: SlotMap = slot_map
         self._rvs: Tuple[RandomVariable, ...] = tuple(rvs)
-        self._precondition: Sequence[Indicator] = precondition
+        self._precondition: Tuple[Indicator, ...] = tuple(precondition)
 
         if len(rvs) != len(set(rv.idx for rv in rvs)):
             raise ValueError('duplicate random variables provided')
@@ -67,7 +69,7 @@ class ProgramWithSlotmap:
     def slot_map(self) -> SlotMap:
         return self._slot_map
 
-    def instances(self, flip: bool = False) -> Iterator[Instance]:
+    def instances(self, flip: bool = False) -> Iterable[Instance]:
         """
         Enumerate instances of the random variables.
 
@@ -84,7 +86,7 @@ class ProgramWithSlotmap:
         """
         return rv_instances(*self._rvs, flip=flip)
 
-    def instances_as_indicators(self, flip: bool = False) -> Iterator[Sequence[Indicator]]:
+    def instances_as_indicators(self, flip: bool = False) -> Iterable[Sequence[Indicator]]:
         """
         Enumerate instances of the random variables.
 

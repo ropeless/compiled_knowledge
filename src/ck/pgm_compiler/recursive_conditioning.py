@@ -52,10 +52,15 @@ def compile_pgm(
         multiply_indicators=True,
         pre_prune_factor_tables=pre_prune_factor_tables,
     )
-    dtree: _DTree = _make_dtree(elimination_order, factor_tables)
 
-    states: List[Sequence[int]] = [tuple(range(len(rv))) for rv in pgm.rvs]
-    top: CircuitNode = dtree.make_circuit(states, factor_tables.circuit)
+    if pgm.number_of_factors == 0:
+        # Deal with special case: no factors
+        top: CircuitNode = factor_tables.circuit.const(1)
+    else:
+        dtree: _DTree = _make_dtree(elimination_order, factor_tables)
+        states: List[Sequence[int]] = [tuple(range(len(rv))) for rv in pgm.rvs]
+        top: CircuitNode = dtree.make_circuit(states, factor_tables.circuit)
+
     top.circuit.remove_unreachable_op_nodes(top)
 
     return PGMCircuit(

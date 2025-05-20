@@ -69,13 +69,13 @@ def compile_pgm(
                 tables_with_rv.append(product(x, y))
             next_tables.append(sum_out(tables_with_rv[0], (rv_idx,)))
             cur_tables = next_tables
-    # All rvs are now eliminated
+
+    # All rvs are now eliminated - all tables should have a single top.
     tops: List[CircuitNode] = [
         table.top()
         for table in cur_tables
-        if len(table) > 0
     ]
-    top = factor_tables.circuit.optimised_add(tops)
+    top: CircuitNode = factor_tables.circuit.optimised_mul(tops)
     top.circuit.remove_unreachable_op_nodes(top)
 
     return PGMCircuit(

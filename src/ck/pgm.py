@@ -82,8 +82,8 @@ import math
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from itertools import repeat as _repeat
-from typing import Sequence, Tuple, Dict, Optional, overload, Iterator, Set, Iterable, List, Union, Callable, \
-    Collection, Any
+from typing import Sequence, Tuple, Dict, Optional, overload, Set, Iterable, List, Union, Callable, \
+    Collection, Any, Iterator
 
 import numpy as np
 
@@ -462,7 +462,7 @@ class PGM:
             a string representation of the given indicators.
         """
         return delim.join(
-            f'{rv}{sep}{state}'
+            f'{_clean_str(rv)}{sep}{_clean_str(state)}'
             for rv, state in (
                 self.indicator_pair(indicator)
                 for indicator in indicators
@@ -559,7 +559,7 @@ class PGM:
         assert len(instance) == len(rvs)
         return delim.join(str(rv.states[i]) for rv, i in zip(rvs, instance))
 
-    def instances(self, flip: bool = False) -> Iterator[Instance]:
+    def instances(self, flip: bool = False) -> Iterable[Instance]:
         """
         Iterate over all possible instances of this PGM, in natural index
         order (i.e., last random variable changing most quickly).
@@ -573,7 +573,7 @@ class PGM:
         """
         return _combos_ranges(tuple(len(rv) for rv in self._rvs), flip=not flip)
 
-    def instances_as_indicators(self, flip: bool = False) -> Iterator[Sequence[Indicator]]:
+    def instances_as_indicators(self, flip: bool = False) -> Iterable[Sequence[Indicator]]:
         """
         Iterate over all possible instances of this PGM, in natural index
         order (i.e., last random variable changing most quickly).
@@ -605,7 +605,7 @@ class PGM:
         """
         return tuple(rv[state] for rv, state in zip(self._rvs, instance))
 
-    def factor_values(self, key: Key) -> Iterator[float]:
+    def factor_values(self, key: Key) -> Iterable[float]:
         """
         For a given instance key, each factor defines a single value. This method
         returns those values.
@@ -717,6 +717,11 @@ class PGM:
         If no indicators are provided, then the value of the partition function (z)
         is returned.
 
+        If multiple indicators are provided for the same random variable, then all matching
+        instances are summed.
+
+        This method has the same semantics as `ProbabilitySpace.wmc` without conditioning.
+
         Warning:
             this is potentially computationally expensive as it marginalised random
             variables not mentioned in the given indicators.
@@ -727,29 +732,51 @@ class PGM:
         Returns:
             the product of factors, conditioned on the given instance. This is the
             computed value of the PGM, conditioned on the given instance.
-
-        Raises:
-            RuntimeError: if a random variable is referenced multiple times in the given indicators.
         """
-        # Create an instance from the indicators
-        inst: List[int] = [-1] * self.number_of_rvs
+        # # Create a filter from the indicators
+        # inst_filter: List[Set[int]] = [set() for _ in range(self.number_of_rvs)]
+        # for indicator in indicators:
+        #     rv_idx: int = indicator.rv_idx
+        #     inst_filter[rv_idx].add(indicator.state_idx)
+        # # Collect rvs not mentioned - to marginalise
+        # for rv, rv_filter in zip(self.rvs, inst_filter):
+        #     if len(rv_filter) == 0:
+        #         rv_filter.update(rv.state_range())
+        #
+        # def _sum_inst(_instance: Instance) -> bool:
+        #     return all(
+        #         (_state in _rv_filter)
+        #         for _state, _rv_filter in zip(_instance, inst_filter)
+        #     )
+        #
+        # # Accumulate the result
+        # sum_value = 0
+        # for instance in self.instances():
+        #     if _sum_inst(instance):
+        #         sum_value += self.value_product(instance)
+        #
+        # return sum_value
+
+        # Work out the space to sum over
+        sum_space_set: List[Optional[Set[int]]] = [None] * self.number_of_rvs
         for indicator in indicators:
             rv_idx: int = indicator.rv_idx
-            if inst[rv_idx] >= 0:
-                raise RuntimeError(f'random variable mentioned multiple times: {self.rvs[rv_idx]}')
-            inst[rv_idx] = indicator.state_idx
+            cur_set = sum_space_set[rv_idx]
+            if cur_set is None:
+                sum_space_set[rv_idx] = cur_set = set()
+            cur_set.add(indicator.state_idx)
 
-        # Collect rvs not mentioned - to marginalise
-        rvs = [rv for rv in self.rvs if inst[rv.idx] < 0]
+        # Convert to a list of states that we need to sum over.
+        sum_space_list: List[List[int]] = [
+            list(cur_set if cur_set is not None else rv.state_range())
+            for cur_set, rv in zip(sum_space_set, self.rvs)
+        ]
 
         # Accumulate the result
-        sum_value = 0
-        for instance in rv_instances_as_indicators(*rvs):
-            for indicator in instance:
-                inst[indicator.rv_idx] = indicator.state_idx
-            sum_value += self.value_product(inst)
-
-        return sum_value
+        return sum(
+            self.value_product(instance)
+            for instance in _combos(sum_space_list)
+        )
 
     def dump_synopsis(
             self,
@@ -937,8 +964,8 @@ class PGM:
         else:
             _cur_rv = sorted(cur_rv)
             rv = self._rvs[_cur_rv[0].rv_idx]
-            states_str = sep.join(str(rv.states[ind.state_idx]) for ind in _cur_rv)
-            cur_str += f'{rv}{elem}{{{states_str}}}'
+            states_str: str = sep.join(_clean_str(rv.states[ind.state_idx]) for ind in _cur_rv)
+            cur_str += f'{_clean_str(rv)}{elem}{{{states_str}}}'
         return cur_str
 
 
@@ -1095,7 +1122,7 @@ class RandomVariable(Sequence[Indicator]):
         """
         return range(len(self._states))
 
-    def factors(self) -> Iterator[Factor]:
+    def factors(self) -> Iterable[Factor]:
         """
         Iterate over factors that this random variable participates in.
         This method performs a search through all `self.pgm.factors`.
@@ -1194,8 +1221,8 @@ class RandomVariable(Sequence[Indicator]):
             return self.idx == other.idx and len(self) == len(other)
         else:
             return (
-                len(indicators) == len(other) and
-                all(indicators[i] == other[i] for i in range(len(indicators)))
+                    len(indicators) == len(other) and
+                    all(indicators[i] == other[i] for i in range(len(indicators)))
             )
 
     def __len__(self) -> int:
@@ -1467,7 +1494,7 @@ class Factor:
     def __getitem__(self, index):
         return self._rvs[index]
 
-    def instances(self, flip: bool = False) -> Iterator[Instance]:
+    def instances(self, flip: bool = False) -> Iterable[Instance]:
         """
         Iterate over all possible instances, in natural index order (i.e.,
         last random variable changing most quickly).
@@ -1481,7 +1508,7 @@ class Factor:
         """
         return self.function.instances(flip)
 
-    def parent_instances(self, flip: bool = False) -> Iterator[Instance]:
+    def parent_instances(self, flip: bool = False) -> Iterable[Instance]:
         """
         Iterate over all possible instances of parent random variable, in
         natural index order (i.e., last random variable changing most quickly).
@@ -1935,7 +1962,7 @@ class PotentialFunction(ABC):
             raise ValueError(f'invalid parameter index: {param_idx}')
         return ParamId(id(self), param_idx)
 
-    def items(self) -> Iterator[Tuple[Instance, float]]:
+    def items(self) -> Iterable[Tuple[Instance, float]]:
         """
         Iterate over all keys and values of this potential function.
 
@@ -1946,7 +1973,7 @@ class PotentialFunction(ABC):
         for key in _combos_ranges(self._shape, flip=True):
             yield key, self[key]
 
-    def instances(self, flip: bool = False) -> Iterator[Instance]:
+    def instances(self, flip: bool = False) -> Iterable[Instance]:
         """
         Iterate over all possible instances, in natural index order (i.e.,
         last random variable changing most quickly).
@@ -1960,7 +1987,7 @@ class PotentialFunction(ABC):
         """
         return _combos_ranges(self._shape, flip=not flip)
 
-    def parent_instances(self, flip: bool = False) -> Iterator[Instance]:
+    def parent_instances(self, flip: bool = False) -> Iterable[Instance]:
         """
         Iterate over all possible instances of parent random variable, in
         natural index order (i.e., last random variable changing most quickly).
@@ -2055,7 +2082,7 @@ class ZeroPotentialFunction(PotentialFunction):
         return self.number_of_states
 
     @property
-    def params(self) -> Iterator[Tuple[int, float]]:
+    def params(self) -> Iterable[Tuple[int, float]]:
         for param_idx in range(self.number_of_parameters):
             yield param_idx, 0
 
@@ -3047,7 +3074,7 @@ class CPTPotentialFunction(PotentialFunction):
         else:
             return self._values[offset:offset + child_size]
 
-    def cpds(self) -> Iterator[Tuple[Instance, Sequence[float]]]:
+    def cpds(self) -> Iterable[Tuple[Instance, Sequence[float]]]:
         """
         Iterate over (parent_states, cpd) tuples.
         This will exclude zero CPDs.
@@ -3358,7 +3385,7 @@ def number_of_states(*rvs: RandomVariable) -> int:
     return _multiply(len(rv) for rv in rvs)
 
 
-def rv_instances(*rvs: RandomVariable, flip: bool = False) -> Iterator[Instance]:
+def rv_instances(*rvs: RandomVariable, flip: bool = False) -> Iterable[Instance]:
     """
     Enumerate instances of the given random variables.
 
@@ -3377,7 +3404,7 @@ def rv_instances(*rvs: RandomVariable, flip: bool = False) -> Iterator[Instance]
     return _combos_ranges(shape, flip=not flip)
 
 
-def rv_instances_as_indicators(*rvs: RandomVariable, flip: bool = False) -> Iterator[Sequence[Indicator]]:
+def rv_instances_as_indicators(*rvs: RandomVariable, flip: bool = False) -> Iterable[Sequence[Indicator]]:
     """
     Enumerate instances of the given random variables.
 
@@ -3492,3 +3519,17 @@ def _normalise_potential_function(
             total = group_sum[group]
             if total > 0:
                 function.set_param_value(param_idx, param_value / total)
+
+
+_CLEAN_CHARS: Set[str] = set('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-+~?.')
+
+
+def _clean_str(s) -> str:
+    """
+    Quote a string if empty or not all characters are in _CLEAN_CHARS.
+    """
+    s = str(s)
+    if len(s) == 0 or not all(c in _CLEAN_CHARS for c in s):
+        return repr(s)
+    else:
+        return s

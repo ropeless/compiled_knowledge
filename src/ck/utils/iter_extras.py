@@ -4,19 +4,19 @@ A module with extra iteration functions.
 from functools import reduce as _reduce
 from itertools import combinations, chain
 from operator import mul as _mul
-from typing import Iterable, Tuple, Iterator, Sequence, TypeVar
+from typing import Iterable, Tuple, Sequence, TypeVar
 
 _T = TypeVar('_T')
 
 
-def flatten(iterables: Iterable[Iterable[_T]]) -> Iterator[_T]:
+def flatten(iterables: Iterable[Iterable[_T]]) -> Iterable[_T]:
     """
     Iterate over the elements of an iterable of iterables.
     """
     return (elem for iterable in iterables for elem in iterable)
 
 
-def deep_flatten(iterables: Iterable) -> Iterator:
+def deep_flatten(iterables: Iterable) -> Iterable:
     """
     Iterate over the flattening of nested iterables.
     """
@@ -28,7 +28,7 @@ def deep_flatten(iterables: Iterable) -> Iterator:
             yield el
 
 
-def combos(list_of_lists: Sequence[Sequence[_T]], flip=False) -> Iterator[Tuple[_T, ...]]:
+def combos(list_of_lists: Sequence[Sequence[_T]], flip=False) -> Iterable[Tuple[_T, ...]]:
     """
     Iterate over all combinations of taking one element from each of the lists.
 
@@ -66,7 +66,7 @@ def combos(list_of_lists: Sequence[Sequence[_T]], flip=False) -> Iterator[Tuple[
                 return
 
 
-def combos_ranges(list_of_lens: Sequence[int], flip=False) -> Iterator[Tuple[int, ...]]:
+def combos_ranges(list_of_lens: Sequence[int], flip=False) -> Iterable[Tuple[int, ...]]:
     """
     Equivalent to combos([range(l) for l in list_of_lens], flip).
 
@@ -106,7 +106,7 @@ def pairs(elements: Iterable[_T]) -> Iterable[Tuple[_T, _T]]:
     return combinations(elements, 2)
 
 
-def sequential_pairs(elements: Sequence[_T]) -> Iterator[Tuple[_T, _T]]:
+def sequential_pairs(elements: Sequence[_T]) -> Iterable[Tuple[_T, _T]]:
     """
     Iterate over sequential pairs in the given list of elements.
     """
@@ -135,6 +135,9 @@ def unzip(xs: Iterable[Tuple[_T]]) -> Tuple[Iterable[_T]]:
     Inverse function of zip.
 
     E.g., a, b, c = unzip(zip(a, b, c))
+
+    Note that the Python type of `a`, `b`, and `c` may not be preserved, only
+    the contents, order and length are guaranteed.
     """
     return zip(*xs)
 

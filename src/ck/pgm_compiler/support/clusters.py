@@ -9,7 +9,7 @@ from ck.pgm import PGM
 
 # A VEObjective is a variable elimination objective function.
 # An objective function is a function from a random variable index (int)
-# to an objected value (float or int). This is used to select
+# to an objective value (float or int). This is used to select
 # a random variable to eliminate in `ve_greedy_min`.
 VEObjective = Callable[[int], int | float]
 

@@ -13,7 +13,7 @@ from ck.utils.random_extras import Random
 # Type of a yield function. Support for a sampler.
 # A yield function may be used to implement a sampler's iterator, thus
 # it provides an Instance or single state index.
-YieldF = Callable[[NDArrayStates], Instance | int]
+YieldF = Callable[[NDArrayStates], int] | Callable[[NDArrayStates], Instance]
 
 
 @dataclass

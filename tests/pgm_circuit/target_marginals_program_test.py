@@ -28,6 +28,8 @@ class Test_TargetMarginals(Fixture):
 
         tm = compile_pgm(pgm, y, const_parameters=False)
 
+        self.assertIs(tm.target_rv, y)
+
         pr, state_idx = tm.map()
         self.assertAlmostEqual(pr, (0.7 + 0.4) / 2)
         self.assertEqual(state_idx, 1)
@@ -58,6 +60,8 @@ class Test_TargetMarginals(Fixture):
         f[(1, 1)] = 0.4
 
         tm = compile_pgm(pgm, y, const_parameters=True)
+
+        self.assertIs(tm.target_rv, y)
 
         pr, state_idx = tm.map()
         self.assertAlmostEqual(pr, (0.7 + 0.4) / 2)

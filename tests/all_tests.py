@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 
-"""
-Unit tests for everything here.
-"""
 import sys
 from pathlib import Path
 from typing import List, Iterator
@@ -15,12 +12,18 @@ NUMBER_OF_RUNS = 1
 
 
 def test_modules() -> List[str]:
+    """
+    Find all test modules in this folder, and sub-folders, recursively.
+    """
     root = Path(__file__).parent
     modules = list(_test_modules_r(root.name, root))
     return modules
 
 
 def _test_modules_r(prefix: str, folder: Path) -> Iterator[str]:
+    """
+    Find all test modules in the given folder, and sub-folders, recursively.
+    """
     for file in folder.iterdir():
         if file.is_dir():
             next_prefix = f'{prefix}.{file.name}'
@@ -31,6 +34,10 @@ def _test_modules_r(prefix: str, folder: Path) -> Iterator[str]:
 
 
 def main():
+    """
+    Execute all unit tests found in this folder and sub-folders, recursively.
+    """
+
     if NUMBER_OF_RUNS < 0:
         raise ValueError(f'Number of runs cannot be negative: {NUMBER_OF_RUNS}')
 

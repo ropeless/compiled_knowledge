@@ -5,7 +5,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, List, Tuple
 
-from ck.circuit import CircuitNode
+import numpy as np
+
+from ck.circuit import CircuitNode, Circuit
 from ck.in_out.parse_ace_lmap import read_lmap, LiteralMap
 from ck.in_out.parse_ace_nnf import read_nnf_with_literal_map
 from ck.in_out.render_net import render_bayesian_network
@@ -58,6 +60,22 @@ def compile_pgm(
     if check_is_bayesian_network and not pgm.check_is_bayesian_network():
         raise ValueError('the given PGM is not a Bayesian network')
 
+    # ACE cannot deal with the empty PGM even though it is a valid Bayesian network
+    if pgm.number_of_factors == 0:
+        circuit = Circuit()
+        circuit.new_vars(pgm.number_of_indicators)
+        parameter_values = np.array([], dtype=np.float64)
+        slot_map = {indicator: i for i, indicator in enumerate(pgm.indicators)}
+        return PGMCircuit(
+            rvs=pgm.rvs,
+            conditions=(),
+            circuit_top=circuit.const(1),
+            number_of_indicators=pgm.number_of_indicators,
+            number_of_parameters=0,
+            slot_map=slot_map,
+            parameter_values=parameter_values,
+        )
+
     java: str
     classpath_separator: str
     java, classpath_separator = _find_java()
@@ -69,7 +87,7 @@ def compile_pgm(
     )
     ace_cmd: List[str] = [
         java,
-        f'-cp',
+        '-cp',
         class_path,
         f'-DACEC2D={files.c2d}',
         f'-Xmx{int(m_bytes)}m',
@@ -83,7 +101,7 @@ def compile_pgm(
             node_names: List[str] = render_bayesian_network(pgm, file, check_structure_bayesian=False)
 
         # Run Ace
-        ace_result = subprocess.run(ace_cmd, capture_output=True, text=True)
+        ace_result: subprocess.CompletedProcess = subprocess.run(ace_cmd, capture_output=True, text=True)
         if print_output:
             print(ace_result.stdout)
             print(ace_result.stderr)
@@ -124,6 +142,29 @@ def compile_pgm(
         slot_map=slot_map,
         parameter_values=parameter_values,
     )
+
+
+def ace_available(
+        ace_dir: Optional[Path | str] = None,
+        jar_dir: Optional[Path | str] = None,
+) -> bool:
+    """
+    Returns:
+        True if it looks like ACE is available, False otherwise.
+        ACE is available if ACE files are in the default location and Java is available.
+    """
+    try:
+        java: str
+        java, _ = _find_java()
+        _: _AceFiles = _find_ace_files(ace_dir, jar_dir)
+
+        java_cmd: List[str] = [java, '--version',]
+        java_result: subprocess.CompletedProcess = subprocess.run(java_cmd, capture_output=True, text=True)
+
+        return java_result.returncode == 0
+
+    except RuntimeError:
+        return False
 
 
 def copy_ace_to_default_location(
@@ -179,6 +220,9 @@ def _find_java() -> Tuple[str, str]:
 
     Returns:
         (java, classpath_separator)
+
+    Raises:
+        RuntimeError: if not found, including a helpful message.
     """
     if sys.platform == 'win32':
         return 'java.exe', ';'
@@ -198,7 +242,7 @@ def _find_ace_files(
     Look for the needed Ace files.
 
     Raises:
-        RuntimeError: if not found, including a helpful message .
+        RuntimeError: if not found, including a helpful message.
     """
     ace_dir: Path = default_ace_location() if ace_dir is None else Path(ace_dir)
     jar_dir: Path = ace_dir if jar_dir is None else Path(jar_dir)

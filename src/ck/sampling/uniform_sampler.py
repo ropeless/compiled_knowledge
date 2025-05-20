@@ -1,15 +1,15 @@
-from typing import Set, List, Iterator, Optional, Sequence
 import random
+from typing import Set, List, Iterator, Optional, Sequence
 
 import numpy as np
 
 from ck.pgm import Instance, RandomVariable, Indicator
 from ck.probability.probability_space import dtype_for_state_indexes, Condition, check_condition
-from .sampler import Sampler
-from .sampler_support import YieldF
 from ck.utils.map_set import MapSet
 from ck.utils.np_extras import DType
 from ck.utils.random_extras import Random
+from .sampler import Sampler
+from .sampler_support import YieldF
 
 
 class UniformSampler(Sampler):
@@ -39,11 +39,15 @@ class UniformSampler(Sampler):
             conditioned_rvs.add(ind.rv_idx, ind.state_idx)
 
         def get_possible_states(_rv: RandomVariable) -> List[int]:
+            """
+            Get the allowable states for a given random variable, given
+            conditions in `conditioned_rvs`.
+            """
             condition_states: Optional[Set[int]] = conditioned_rvs.get(_rv.idx)
             if condition_states is None:
                 return list(range(len(_rv)))
             else:
-                return [state_idx for state_idx in range(len(_rv)) if state_idx not in condition_states]
+                return list(condition_states)
 
         possible_states: List[List[int]] = [
             get_possible_states(rv)
@@ -63,4 +67,6 @@ class UniformSampler(Sampler):
             for i, l in enumerate(possible_states):
                 state_idx = rand.randrange(0, len(l))
                 state[i] = l[state_idx]
+            # We know the yield function will always provide either ints or Instances
+            # noinspection PyTypeChecker
             yield yield_f(state)

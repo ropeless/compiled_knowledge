@@ -3,6 +3,7 @@ An abstract class for object providing probabilities.
 """
 import math
 from abc import ABC, abstractmethod
+from itertools import chain
 from typing import Sequence, Tuple, Iterable, Callable
 
 import numpy as np
@@ -75,15 +76,38 @@ class ProbabilitySpace(ABC):
             the probability of the given indicators, conditioned on the given conditions.
         """
         condition: Tuple[Indicator, ...] = check_condition(condition)
+
         if len(condition) == 0:
             z = self.z
+            if z <= 0:
+                return np.nan
         else:
             z = self.wmc(*condition)
-            indicators += condition  # append the condition
-        if z > 0:
-            return self.wmc(*indicators) / z
-        else:
-            return np.nan
+            if z <= 0:
+                return np.nan
+
+            # Combine the indicators with the condition
+            # If a variable is mentioned in both the indicators and condition, then
+            # we need to take the intersection, and check for contradictions.
+            # If a variable is mentioned in the condition but not indicators, then
+            # the rv condition needs to be added to the indicators.
+            indicator_groups: MapSet[int, Indicator] = _group_indicators(indicators)
+            condition_groups: MapSet[int, Indicator] = _group_indicators(condition)
+
+            for rv_idx, indicators in condition_groups.items():
+                indicator_group = indicator_groups.get(rv_idx)
+                if indicator_group is None:
+                    indicator_groups.add_all(rv_idx, indicators)
+                else:
+                    indicator_group.intersection_update(indicators)
+                    if len(indicator_group) == 0:
+                        # A contradiction between the indicators and conditions
+                        return 0.0
+
+            # Collect all the indicators from the updated indicator_groups
+            indicators = chain(*indicator_groups.values())
+
+        return self.wmc(*indicators) / z
 
     def marginal_distribution(self, *rvs: RandomVariable, condition: Condition = ()) -> NDArrayNumeric:
         """
@@ -160,9 +184,7 @@ class ProbabilitySpace(ABC):
         assert len(rv_indexes) == len(rvs), 'duplicated random variables not allowed'
 
         # Group conditioning indicators by random variable.
-        conditions_by_rvs = MapSet()
-        for ind in condition:
-            conditions_by_rvs.get_set(ind.rv_idx).add(ind.state_idx)
+        conditions_by_rvs = _group_states(condition)
 
         # See if any MAP random variable is also conditioned.
         # Reduce the state space of any conditioned MAP rv.
@@ -195,12 +217,12 @@ class ProbabilitySpace(ABC):
             # Loop over the state space of the 'loop' rvs
             best_probability = float('-inf')
             best_states = None
-            inds: Tuple[Indicator, ...]
-            for inds in _combos(loop_rvs):
-                probability = self.wmc(*(inds + new_conditions))
+            indicators: Tuple[Indicator, ...]
+            for indicators in _combos(loop_rvs):
+                probability = self.wmc(*(indicators + new_conditions))
                 if probability > best_probability:
                     best_probability = probability
-                    best_states = tuple(ind.state_idx for ind in inds)
+                    best_states = tuple(ind.state_idx for ind in indicators)
             condition_probability = self.wmc(*condition)
             return best_probability / condition_probability, best_states
 
@@ -549,6 +571,38 @@ def dtype_for_state_indexes(rvs: Iterable[RandomVariable]) -> DTypeStates:
         a numpy dtype.
     """
     return dtype_for_number_of_states(max((len(rv) for rv in rvs), default=0))
+
+
+def _group_indicators(indicators: Iterable[Indicator]) -> MapSet[int, Indicator]:
+    """
+    Group the given indicators by rv_idx.
+
+    Args:
+        indicators: the indicators to group.
+
+    Returns:
+        A mapping from rv_idx to set of indicators.
+    """
+    groups: MapSet[int, Indicator] = MapSet()
+    for indicator in indicators:
+        groups.add(indicator.rv_idx, indicator)
+    return groups
+
+
+def _group_states(indicators: Iterable[Indicator]) -> MapSet[int, int]:
+    """
+    Group the given indicator states by rv_idx.
+
+    Args:
+        indicators: the indicators to group.
+
+    Returns:
+        A mapping from rv_idx to set of state indexes.
+    """
+    groups: MapSet[int, int] = MapSet()
+    for indicator in indicators:
+        groups.add(indicator.rv_idx, indicator.state_idx)
+    return groups
 
 
 def _normalise_marginal(distribution: NDArrayFloat64) -> None:

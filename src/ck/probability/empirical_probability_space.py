@@ -7,6 +7,9 @@ from ck.probability.probability_space import ProbabilitySpace, Condition, check_
 class EmpiricalProbabilitySpace(ProbabilitySpace):
     def __init__(self, rvs: Sequence[RandomVariable], samples: Iterable[Instance]):
         """
+        Enable probabilistic queries over a sample from a sample space.
+        Note that this is not necessarily an efficient approach to calculating probabilities and statistics.
+
         Assumes:
             len(sample) == len(rvs), for each sample in samples.
             0 <= sample[i] < len(rvs[i]), for each sample in samples, for i in range(len(rvs)).

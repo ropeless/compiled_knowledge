@@ -12,19 +12,21 @@ from ck.pgm_compiler.support.join_tree import *
 
 _NEG_INF = float('-inf')
 
+DEFAULT_PRODUCT_SEARCH_LIMIT: int = 1000
+
 
 def compile_pgm(
         pgm: PGM,
         const_parameters: bool = True,
         *,
         algorithm: JoinTreeAlgorithm = MIN_FILL_THEN_DEGREE,
-        limit_product_tree_search: int = 1000,
+        limit_product_tree_search: int = DEFAULT_PRODUCT_SEARCH_LIMIT,
         pre_prune_factor_tables: bool = True,
 ) -> PGMCircuit:
     """
     Compile the PGM to an arithmetic circuit, using factor elimination.
 
-    When forming the product of factors withing a join tree nodes,
+    When forming the product of factors within join tree nodes,
     this method searches all practical binary trees for forming products,
     up to the given limit, `limit_product_tree_search`. The minimum is 1.
 
@@ -57,7 +59,7 @@ def compile_pgm_best_jointree(
         pgm: PGM,
         const_parameters: bool = True,
         *,
-        limit_product_tree_search: int = 1000,
+        limit_product_tree_search: int = DEFAULT_PRODUCT_SEARCH_LIMIT,
         pre_prune_factor_tables: bool = True,
 ) -> PGMCircuit:
     """
@@ -111,7 +113,7 @@ def compile_pgm_best_jointree(
 def join_tree_to_circuit(
         join_tree: JoinTree,
         const_parameters: bool = True,
-        limit_product_tree_search: int = 1000,
+        limit_product_tree_search: int = DEFAULT_PRODUCT_SEARCH_LIMIT,
         pre_prune_factor_tables: bool = True,
 ) -> PGMCircuit:
     """

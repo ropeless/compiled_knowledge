@@ -1,4 +1,4 @@
-from typing import Collection, Iterator, List, Sequence
+from typing import Collection, Iterator, Sequence
 
 import numpy as np
 
@@ -78,12 +78,16 @@ class WMCMetropolisSampler(Sampler):
             if skip == 0:
                 while True:
                     w = self._next_sample_metropolis(possibles, program_buffer, state, w, rand)
+                    # We know the yield function will always provide either ints or Instances
+                    # noinspection PyTypeChecker
                     yield yield_f(state)
             else:
                 while True:
                     for _ in range(skip):
                         w = self._next_sample_metropolis(possibles, program_buffer, state, w, rand)
                     w = self._next_sample_metropolis(possibles, program_buffer, state, w, rand)
+                    # We know the yield function will always provide either ints or Instances
+                    # noinspection PyTypeChecker
                     yield yield_f(state)
 
         else:
@@ -92,6 +96,8 @@ class WMCMetropolisSampler(Sampler):
                 for _ in range(skip):
                     w = self._next_sample_metropolis(possibles, program_buffer, state, w, rand)
                 w = self._next_sample_metropolis(possibles, program_buffer, state, w, rand)
+                # We know the yield function will always provide either ints or Instances
+                # noinspection PyTypeChecker
                 yield yield_f(state)
 
                 if rand.random() < pr_restart:

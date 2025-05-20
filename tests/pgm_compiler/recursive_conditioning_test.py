@@ -2,24 +2,23 @@ from more_itertools import take
 
 from ck.circuit_compiler.llvm_compiler import compile_circuit
 from ck.pgm import PGM
-from ck.pgm_compiler import factor_elimination
 from ck.pgm_circuit import PGMCircuit
+from ck.pgm_compiler import recursive_conditioning
 from ck.program.program_buffer import ProgramBuffer
 from tests.helpers.pgm_test_cases import PGMTestCases
-
 from tests.helpers.unittest_fixture import Fixture, test_main
 
 LIMIT_INSTANCES_CHECK: int = 1_000_000
 
 
-class TestFactorElimination(Fixture, PGMTestCases):
+class TestRecursiveConditioning(Fixture, PGMTestCases):
 
     def check_pgm(self, pgm: PGM) -> None:
         """
         Compile the PGM and assert the program value is the same as the PGM value product
         for every possible instance.
         """
-        pgm_cct: PGMCircuit = factor_elimination.compile_pgm(pgm)
+        pgm_cct: PGMCircuit = recursive_conditioning.compile_pgm(pgm)
         prog = ProgramBuffer(compile_circuit(pgm_cct.circuit_top))
         slot_map = pgm_cct.slot_map
 

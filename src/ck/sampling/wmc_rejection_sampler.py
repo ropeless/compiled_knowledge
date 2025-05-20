@@ -91,6 +91,8 @@ class WMCRejectionSampler(Sampler):
             w: float = wmc()
 
             if rand.random() * self._w_max < w:
+                # We know the yield function will always provide either ints or Instances
+                # noinspection PyTypeChecker
                 yield yield_f(state)
 
             # Update w_not_seen and w_high to adapt w_max.

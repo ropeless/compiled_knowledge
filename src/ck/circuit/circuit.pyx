@@ -334,6 +334,7 @@ cdef class Circuit:
             prefix: str = '',
             indent: str = '  ',
             var_names: Optional[List[str]] = None,
+            include_consts: bool = False,
     ) -> None:
         """
         Print a dump of the Circuit.
@@ -343,6 +344,7 @@ cdef class Circuit:
             prefix: optional prefix for indenting all lines.
             indent: additional prefix to use for extra indentation.
             var_names: optional variable names to show.
+            include_consts: if true, then constant values are dumped.
         """
 
         next_prefix: str = prefix + indent
@@ -367,10 +369,14 @@ cdef class Circuit:
             elif var.is_const():
                 print(f'{next_prefix}var[{var.idx}]: {var.const.value}')
 
-        print(f'{prefix}const nodes: {self.number_of_consts}')
+        if include_consts:
+            print(f'{prefix}const nodes: {self.number_of_consts}')
+            for const in self._const_map.values():
+                print(f'{next_prefix}{const.value!r}')
+
+        # Add const nodes to the node_name dict
         for const in self._const_map.values():
-            node_name[id(const)] = str(const.value)
-            print(f'{next_prefix}{const.value}')
+            node_name[id(const)] = repr(const.value)
 
         # Add op nodes to the node_name dict
         for i, op in enumerate(self.ops):

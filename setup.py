@@ -39,5 +39,4 @@ setup(
     ext_modules=cythonize(CYTHON_EXTENSIONS),
     package_data=PACKAGE_DATA,
     include_package_data=True,
-    quiet=True,
 )

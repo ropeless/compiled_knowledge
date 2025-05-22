@@ -1,3 +1,9 @@
+"""
+This is a pure Python implementation of Circuits (for testing and development)
+
+For more documentation on this module, refer to the Jupyter notebook docs/6_circuits_and_programs.ipynb.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -14,12 +20,15 @@ MUL: int = 1
 
 class Circuit:
     """
-    An arithmetic circuit defining computation based on input variables (VarNode objects)
-    and constant values (ConstNode objects). Computation is defined over a mathematical
-    ring, with two operations: addition (AddNode objects) and multiplication (MulNode objects).
+    An arithmetic circuit defines an arithmetic function from input variables (`VarNode` objects)
+    and constant values (`ConstNode` objects) to one or more result values. Computation is defined
+    over a mathematical ring, with two operations: addition and multiplication (represented
+    by `OpNode` objects).
 
-    An arithmetic circuit cam be directly interpreted, using `ck.circuit_compiler.circuit_interpreter`,
-     or may be compiled to an LLVM JIT, using `ck.circuit_compiler.llvm_compiler`.
+    An arithmetic circuit needs to be compiled to a program to execute the function.
+
+    All nodes belong to a circuit. All nodes are immutable, with the exception that a
+    `VarNode` may be temporarily be set to a constant value.
     """
 
     def __init__(self, zero: ConstValue = 0, one: ConstValue = 1):
@@ -352,6 +361,7 @@ class Circuit:
             prefix: str = '',
             indent: str = '  ',
             var_names: Optional[List[str]] = None,
+            include_consts: bool = False,
     ) -> None:
         """
         Print a dump of the Circuit.
@@ -361,6 +371,7 @@ class Circuit:
             prefix: optional prefix for indenting all lines.
             indent: additional prefix to use for extra indentation.
             var_names: optional variable names to show.
+            include_consts: if true, then constant values are dumped.
         """
 
         next_prefix: str = prefix + indent
@@ -374,34 +385,38 @@ class Circuit:
         print(f'{prefix}number of arcs: {self.number_of_arcs:,}')
 
         print(f'{prefix}var nodes: {self.number_of_vars}')
-        for var in self._vars:
+        for var in self.vars:
             node_name[id(var)] = f'var[{var.idx}]'
             var_name: str = '' if var_names is None or var.idx >= len(var_names) else var_names[var.idx]
             if var_name != '':
                 if var.is_const():
-                    print(f'{next_prefix}var[{var.idx}]: {var_name}, const({var.const.value})')
+                    print(f'{next_prefix}var[{var.idx}]: {var_name}, {var.const.value}')
                 else:
                     print(f'{next_prefix}var[{var.idx}]: {var_name}')
             elif var.is_const():
-                print(f'{next_prefix}var[{var.idx}]: const({var.const.value})')
+                print(f'{next_prefix}var[{var.idx}]: {var.const.value}')
 
-        print(f'{prefix}const nodes: {self.number_of_consts}')
+        if include_consts:
+            print(f'{prefix}const nodes: {self.number_of_consts}')
+            for const in self._const_map.values():
+                print(f'{next_prefix}{const.value!r}')
+
+        # Add const nodes to the node_name dict
         for const in self._const_map.values():
-            node_name[id(const)] = str(const.value)
-            print(f'{next_prefix}const({const.value})')
+            node_name[id(const)] = repr(const.value)
 
         # Add op nodes to the node_name dict
-        for i, op in enumerate(self._ops):
-            node_name[id(op)] = f'{op.symbol}<{i}>'
+        for i, op in enumerate(self.ops):
+            node_name[id(op)] = f'{op.op_str()}<{i}>'
 
         print(
             f'{prefix}op nodes: {self.number_of_op_nodes} '
             f'(arcs: {self.number_of_arcs}, ops: {self.number_of_operations})'
         )
-        for op in reversed(self._ops):
+        for op in reversed(self.ops):
             op_name = node_name[id(op)]
             args_str = ' '.join(node_name[id(arg)] for arg in op.args)
-            print(f'{next_prefix}{op_name}\\{len(op.args)}: {args_str}')
+            print(f'{next_prefix}{op_name}: {args_str}')
 
     def _check_nodes(self, nodes: Iterable[Args]) -> Tuple[CircuitNode, ...]:
         """
@@ -585,12 +600,18 @@ class OpNode(CircuitNode):
         self.symbol: int = symbol
 
     def __str__(self) -> str:
+        return f'{self.op_str()}\\{len(self.args)}'
+
+    def op_str(self) -> str:
+        """
+        Returns the op node operation as a string.
+        """
         if self.symbol == MUL:
-            return f'mul\\{len(self.args)}'
+            return 'mul'
         elif self.symbol == ADD:
-            return f'add\\{len(self.args)}'
+            return 'add'
         else:
-            return f'?{self.symbol}\\{len(self.args)}'
+            return '?' + str(self.symbol)
 
 
 @dataclass
@@ -688,7 +709,7 @@ class _DerivativeHelper:
             for value in (self._derivative_prod(prods) for prods in d_node.sum_prod)
             if not value.is_zero()
         )
-        # we can release the temporary memory at this DNode now
+        # We can release the temporary memory at this DNode now
         d_node.sum_prod = None
 
         # Construct the addition operation

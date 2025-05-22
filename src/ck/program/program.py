@@ -1,3 +1,6 @@
+"""
+For more documentation on this module, refer to the Jupyter notebook docs/6_circuits_and_programs.ipynb.
+"""
 from typing import Callable, Sequence
 
 import numpy as np
@@ -8,7 +11,12 @@ from ck.utils.np_extras import DTypeNumeric, NDArrayNumeric
 
 class Program:
     """
-    A Program wraps a RawProgram to make a convenient callable.
+    A program represents an arithmetic a function from input values to output values.
+
+    Internally a `Program` wraps a `RawProgram` which is the object returned by a circuit compiler.
+
+    Every `Program` has a numpy `dtype` which defines the numeric data type for input and output values.
+    Typically, the `dtype` of a program is a C style double.
     """
 
     def __init__(self, raw_program: RawProgram):

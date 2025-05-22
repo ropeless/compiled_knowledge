@@ -1,80 +1,5 @@
 """
-This module support the in-memory creation of probabilistic graphical models.
-
-A probabilistic graphical model (PGM) represents a joint probability distribution over
-a set of random variables. Specifically, a PGM is a factor graph with discrete random variables.
-
-A random variable is represented by a RandomVariable object. Each random variable has a
-fixed, finite number of states. Many algorithms will assume at least two states.
-Every RandomVariable object belongs to exactly one PGM object. A RandomVariable
-has a name (for human convenience) and its states are indexed by integers, counting
-from zero.
-
-A PGM also has factors. Each Factor of a PGM connects a set of RandomVariable objects
-of the PGM. In general, the order of the random variables of a factor is functionally
-irrelevant, but is practically relevant for operating with Factor objects. The "shape"
-of a factor is the list of the numbers of states of the factor's random variables (co-indexed
-with the list of random variables of the factor).
-
-If a PGM is representing a Bayesian network, then each factor represents a conditional
-probability table (CPT) and the first random variable of the factor is taken to be the child
-random variable, with the remaining random variables being the parents.
-
-Every factor has associated with it a potential function. A potential function maps
-each combination of states of the factor's random variables to a value (of type float).
-A combination of states of random variables is represented as a Key. A Key is essentially
-a list of state indexes, co-indexed with the factor's random variables.
-
-A potential function is a map from all possible keys (according to the potential function's
-shape) to a float value. Each potential function has zero or more "parameters" which may be
-adjusted to change the potential function's mapping. The parameters of a potential function
-are indexed sequentially from zero.
-
-Each parameter of a potential function is associated with one or more keys. The value of the
-parameter is the value of the potential function for it's associated keys. Conversely, each
-key of a potential function is associate with zero or one parameters. That is, it is possible
-that a potential function maps multiple keys to the same parameter, in which case keys that map
-to the same parameter will have the same value.
-
-If a key of a potential function is associated with a parameter, then the value of
-the potential function for that key is the value of the parameter.
-
-If a key of a potential function is associated with zero parameters then the value of
-the potential function for that key is zero. Furthermore, the key is referred to as
-"guaranteed-zero", meaning that no change in the parameter values of the potential function
-will change the value for that key away from zero.
-
-RandomVariable objects are immutable and hashable, including their states.
-
-Factor objects cannot change the random variables they are a factor of. However,
-the PotentialFunction associated with a Factor may be updated.
-
-Factors may share a potential function, so long as they have the same shape.
-
-PotentialFunction objects cannot change their shape, but may be otherwise mutable and
-are generally not hashable. A particular class of potential function may allow its mapping
-to change and even its available parameters to change.
-
-There are many kinds of potential function. A DensePotentialFunction has exactly
-one parameter for each possible key (no 'guaranteed-zero' keys) and there are no
-shared parameters. A SparsePotentialFunction only has parameters for explicitly
-mentioned keys.
-
-There is a special class of potential function called a ZeroPotentialFunction which
-(like DensePotentialFunction) has a parameter for each possible key (and thus no
-key is guaranteed-zero). However, the value of each parameter is zero and there
-is no mechanism to update these values.
-
-A ZeroPotentialFunction is the default PotentialFunction for a Factor. It may be seen
-as a light-weight placeholder until replaced by some other potential function.
-It may also be used as a light-weight surrogate for a DensePotentialFunction when
-performing PGM parameter learning.
-
-Each RandomVariable has an index (`idx`) which is a sequence number, starting from zero,
-indicating when that RandomVariable was added to its PGM.
-
-Each Factor has an  index (`idx`) which is a sequence number, starting from zero,
-indicating when that Factor was added to its PGM.
+For more documentation on this module, refer to the Jupyter notebook docs/4_PGM_advanced.ipynb.
 """
 from __future__ import annotations
 
@@ -2148,6 +2073,8 @@ class DensePotentialFunction(PotentialFunction):
 
     @property
     def params(self) -> Iterable[Tuple[int, float]]:
+        # Type warning due to numpy type erasure
+        # noinspection PyTypeChecker
         return enumerate(self._values)
 
     @property
@@ -2324,9 +2251,12 @@ class DensePotentialFunction(PotentialFunction):
 class SparsePotentialFunction(PotentialFunction):
     """
     A sparse potential function.
-    The default value for each parameter is zero.
-    The user may set the value of any key.
-    Setting the value of a key back to zero does not remove its parameter.
+
+    There is one parameter for each non-zero key value.
+    The user may set the value for any key and parameters will
+    be automatically reconfigured as needed. Setting the value for
+    a key to zero disassociates the key from its parameter and
+    thus makes that key "guaranteed zero".
     """
 
     def __init__(self, factor: Factor):
@@ -2381,7 +2311,7 @@ class SparsePotentialFunction(PotentialFunction):
         """
         Set the potential function value, for a given key.
         
-       If value is zero, then the key will become "guaranteed zero".
+        If value is zero, then the key will become "guaranteed zero".
 
         Arg:
             key: defines an instance in the state space of the potential function.
@@ -2395,7 +2325,7 @@ class SparsePotentialFunction(PotentialFunction):
 
         if param_idx is None:
             if value == 0:
-                # nothing to do
+                # Nothing to do
                 return
             param_idx = len(self._values)
             self._values.append(value)
@@ -2403,11 +2333,16 @@ class SparsePotentialFunction(PotentialFunction):
             return
 
         if value != 0:
-            # simple case
+            # Simple case
             self._values[param_idx] = value
             return
 
-        # Need to clear an existing non-zero parameter.
+        # This is the case where the key was associated with a parameter
+        # but the value is being set to zero, so we
+        # need to clear an existing non-zero parameter.
+        # This code operates by first ensuring the parameter is the last one,
+        # then popping the last parameter.
+
         end: int = len(self._values) - 1
         if param_idx != end:
             # need to swap the parameter with the end.
@@ -2419,7 +2354,7 @@ class SparsePotentialFunction(PotentialFunction):
                     # There will only be one, so we can break now
                     break
 
-        # remove the parameter
+        # Remove the parameter
         self._values.pop()
         self._params.pop(instance)
 
@@ -2568,10 +2503,14 @@ class SparsePotentialFunction(PotentialFunction):
 
 class CompactPotentialFunction(PotentialFunction):
     """
-    A sparse potential function.
-    There is one parameter for each unique, non-zero parameter value.
-    The default value for each parameter is zero.
-    The user may set the value of any key.
+    A compact potential function is sparse, where values for keys of
+    the same value are represented by a single parameter.
+
+    There is one parameter for each unique, non-zero key value.
+    The user may set the value for any key and parameters will
+    be automatically reconfigured as needed. Setting the value for
+    a key to zero disassociates the key from its parameter and
+    thus makes that key "guaranteed zero".
     """
 
     def __init__(self, factor: Factor):
@@ -2799,9 +2738,9 @@ class CompactPotentialFunction(PotentialFunction):
 
     def _remove_param(self, param_idx: int) -> None:
         """
-        Remove the index parameter from self._params and self._counts.
+        Remove the indexed parameter from self._params and self._counts.
         If the parameter is not at the end of the list of parameters
-        then it will be swapped with the end parameter.
+        then it will be swapped with the last parameter in the list.
         """
 
         # ensure the parameter is at the end of the list
@@ -2823,10 +2762,10 @@ class CompactPotentialFunction(PotentialFunction):
 
 class ClausePotentialFunction(PotentialFunction):
     """
-    A clause potential function represents a clause (from a CNF formula) i.e. a disjunction.
-    A clause over variables X, Y, Z, is of the form: 'X=x or Y=y or Z=z'.
+    A clause potential function represents a clause From a CNF formula.
+    I.e. a clause over variables X, Y, Z, is a disjunction of the form: 'X=x or Y=y or Z=z'.
 
-    A clause potential function guaranteed zero for the key where the clause is false,
+    A clause potential function is guaranteed zero for a key where the clause is false,
     i.e., when 'X != x and Y != y and Z != z'.
 
     For keys where the clause is true, the value of the potential function
@@ -3527,6 +3466,7 @@ _CLEAN_CHARS: Set[str] = set('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWX
 def _clean_str(s) -> str:
     """
     Quote a string if empty or not all characters are in _CLEAN_CHARS.
+    This is used when rendering indicators.
     """
     s = str(s)
     if len(s) == 0 or not all(c in _CLEAN_CHARS for c in s):

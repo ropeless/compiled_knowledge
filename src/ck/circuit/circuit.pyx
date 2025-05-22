@@ -1,3 +1,6 @@
+"""
+For more documentation on this module, refer to the Jupyter notebook docs/6_circuits_and_programs.ipynb.
+"""
 from __future__ import annotations
 
 from itertools import chain
@@ -15,12 +18,15 @@ MUL: int = 1
 
 cdef class Circuit:
     """
-    An arithmetic circuit defining computation based on input variables (VarNode objects)
-    and constant values (ConstNode objects). Computation is defined over a mathematical
-    ring, with two operations: addition (AddNode objects) and multiplication (MulNode objects).
+    An arithmetic circuit defines an arithmetic function from input variables (`VarNode` objects)
+    and constant values (`ConstNode` objects) to one or more result values. Computation is defined
+    over a mathematical ring, with two operations: addition and multiplication (represented
+    by `OpNode` objects).
 
-    An arithmetic circuit cam be directly interpreted, using `ck.circuit_compiler.circuit_interpreter`,
-     or may be compiled to an LLVM JIT, using `ck.circuit_compiler.llvm_compiler`.
+    An arithmetic circuit needs to be compiled to a program to execute the function.
+
+    All nodes belong to a circuit. All nodes are immutable, with the exception that a
+    `VarNode` may be temporarily be set to a constant value.
     """
 
     cdef public list[VarNode] vars

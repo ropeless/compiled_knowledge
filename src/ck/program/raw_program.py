@@ -9,8 +9,8 @@ from ck.utils.np_extras import NDArrayNumeric, DTypeNumeric
 
 # RawProgramFunction is a function of three ctypes arrays, returning nothing.
 # Args:
-#     [0]: input parameter values,
-#     [1]: working memory,
+#     [0]: input  values,
+#     [1]: temporary working memory,
 #     [2]: output values.
 RawProgramFunction = Callable[[ct.POINTER, ct.POINTER, ct.POINTER], None]
 
@@ -18,10 +18,16 @@ RawProgramFunction = Callable[[ct.POINTER, ct.POINTER, ct.POINTER], None]
 @dataclass
 class RawProgram:
     """
+    A raw program is returned by a circuit compiler to provide execution of
+    the function defined by a compiled circuit.
+
+    A `RawProgram` is a `Callable` with the signature:
+
+
     Fields:
         function: is a function of three ctypes arrays, returning nothing.
         dtype: the numpy data type of  the array values.
-        number_of_vars: the number of input parameter values (first function argument).
+        number_of_vars: the number of input values (first function argument).
         number_of_tmps: the number of working memory values (second function argument).
         number_of_results: the number of result values (third function argument).
         var_indices:  maps the index of inputs (from 0 to self.number_of_vars - 1) to the index

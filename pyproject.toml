@@ -1,6 +1,6 @@
 [project]
 name = "compiled-knowledge"
-version = "4.0.0a11"
+version = "4.0.0a12"
 description = "A Python package for compiling and querying discrete probabilistic graphical models."
 readme = "README.md"
 license = "MIT"
@@ -32,6 +32,7 @@ setuptools = "*"
 build = "*"
 jupyter-book = "*"
 twine = "*"
+toml = "*"
 
 [tool.poetry.group.test.dependencies]
 coverage = "*"

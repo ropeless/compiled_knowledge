@@ -1,4 +1,9 @@
+# jupyter-book configuration
+# Learn more at https://jupyterbook.org/en/stable/customize/config.html
+
 title: Compiled Knowledge Reference
 author: The Compiled Knowledge Community
+copyright: "2025"
 execute:
   execute_notebooks: "off"
+  exclude_patterns: ["*_template.*"]

@@ -60,9 +60,6 @@ class TestPGMCircuit(Fixture):
                 var[3]: 'y'[1] 1
                 var[4]: param[0] = 23
                 var[5]: param[1] = 45
-            const nodes: 2
-                0
-                1
             op nodes: 1 (arcs: 6, ops: 5)
                 add<0>: var[0] var[1] var[2] var[3] var[4] var[5]
             """

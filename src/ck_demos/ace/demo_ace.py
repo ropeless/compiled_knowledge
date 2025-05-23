@@ -17,7 +17,7 @@ def main() -> None:
     # Here is an example showing how to copy Ace to the default
     # location from a source directory.
     #
-    # ace.copy_ace_to_default_location(r'E:\Dropbox\Research\Ace\all')
+    # ace.copy_ace_to_default_location(r'C:\Research\Ace\ace_v3.0_windows')
 
     pgm_cct: PGMCircuit = ace.compile_pgm(pgm, print_output=True)
 

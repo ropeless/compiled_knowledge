@@ -15,23 +15,30 @@ Prepare for the release
 
 Only proceed if the "main" branch is ready for release.
 
-9. Commit and push the "main" branch.
-
 Perform the release
 -------------------
 
-10. Ensure you are on an up-to-date checkout of the "main" branch.
-11. Delete any existing project `dist` directory.
-12. Build the package using: `python setup.py sdist bdist_wheel`.
-13. Upload the package to PyPi using: `python -m twine upload dist/*`.
+1. Commit and push the "main" branch.
+   This will automatically release the documentation.
+
+Option 1: GitHub Workflow
+2. Go to the project [GitHub Actions, Upload Python Package](https://github.com/ropeless/compiled_knowledge/actions/workflows/python-publish.yml).
+3. Select "Run workflow".
+
+Option 2: Manual release
+2. Ensure you are on an up-to-date checkout of the "main" branch.
+3. Delete any existing project `dist` directory.
+4. Build the package using: `python setup.py sdist bdist_wheel`.
+5. Upload the package to PyPI using: `python -m twine upload dist/*`.
+
 
 Post-release checks
 -------------------
 
-14. Check the online version of the documentation:  https://compiled-knowledge.readthedocs.io/.
-15. Check the PyPi release history: https://pypi.org/project/compiled-knowledge/#history.
-16. Open a CK client test project. Update the dependencies (e.g., `poetry lock` then `poetry sync`).
-    Ensure CK upgraded and that the test project works as expected.
+1. Check the online version of the documentation:  https://compiled-knowledge.readthedocs.io/.
+2. Check the PyPi release history: https://pypi.org/project/compiled-knowledge/#history.
+3. Open a CK client test project. Update the dependencies (e.g., `poetry lock` then `poetry sync`).
+   Ensure CK upgraded and that the test project works as expected.
 
 Actions for a broken release
 ============================

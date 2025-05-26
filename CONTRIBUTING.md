@@ -56,8 +56,6 @@ This project aims to exhibit excellent design and coding practices.
 - Always include the semantics and intention of code in code comments. Don't merely explain
   the implementation. Make caveats, limitations and important details clear.
 
-- Prefer to use functions rather than classes for implementing functionality.
-
 - Use conventional design patterns to make code understandable.
 
 - Prefer to use Python type hints.

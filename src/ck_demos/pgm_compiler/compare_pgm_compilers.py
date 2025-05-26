@@ -9,6 +9,14 @@ from ck_demos.utils.compare import compare
 
 # @formatter:off
 
+# =========================================
+#  Experiment configuration
+# =========================================
+
+CACHE_CIRCUITS: bool = True
+BREAK_BETWEEN_PGMS: bool = True
+COMMA_NUMBERS: bool = True
+
 PGMS: Sequence[PGM] = [
     example.Rain(),
     example.Cancer(),
@@ -19,10 +27,10 @@ PGMS: Sequence[PGM] = [
     example.Child(),
     example.Alarm(),
 
-    # example.Hailfinder(),
-    # example.Insurance(),
-    # example.Pathfinder(),
-    # example.Mildew(),
+    example.Hailfinder(),
+    example.Insurance(),
+    example.Pathfinder(),
+    example.Mildew(),
 ]
 
 CCT_COMPILERS: Sequence[NamedCircuitCompiler] = [DEFAULT_CIRCUIT_COMPILER]
@@ -41,6 +49,9 @@ def main() -> None:
         pgms=PGMS,
         pgm_compilers=PGM_COMPILERS,
         cct_compilers=CCT_COMPILERS,
+        cache_circuits=CACHE_CIRCUITS,
+        break_between_pgms=BREAK_BETWEEN_PGMS,
+        comma_numbers=COMMA_NUMBERS,
     )
     print()
     print('Done.')

@@ -27,10 +27,10 @@ PGMS: Sequence[PGM] = [
     example.Child(),
     example.Alarm(),
 
-    example.Hailfinder(),
-    example.Insurance(),
-    example.Pathfinder(),
-    example.Mildew(),
+    # example.Hailfinder(),
+    # example.Insurance(),
+    # example.Pathfinder(),
+    # example.Mildew(),
 ]
 
 PGM_COMPILERS: Sequence[NamedPGMCompiler] = [

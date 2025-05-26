@@ -2,25 +2,33 @@ from ck.pgm import PGM
 
 
 class Pathfinder(PGM):
+    """
+    This implementation of the Pathfinder PGM has 93 states for the "Fault" random
+    variable, and its factor has been normalised to be a CPT.
+    """
 
     def __init__(self):
         super().__init__(self.__class__.__name__)
 
         pgm_rv0 = self.new_rv('Fault', (
-        'AIDS early', 'AILD', 'ALIP', 'Cat scratch disease', 'Dermatopathic laden', 'Florid follic hyperp',
-        'GLH hyaline vascular', 'GLH plasma cell', 'Granulomatous laden', 'Histiocytosis x', 'Infectious mono',
-        'Leprosy-lepromatous', 'Lymphangiographic', 'Mantle zone hyperpla', 'Necrotizing Kikuchi',
-        'Necrotiz non-Kikuchi', 'Rheumatoid arthritis', 'Sarcoidosis', 'SHML', 'Sinus histiocytosis', 'Syphilis',
-        'Toxoplasmosis', 'Tuberculosis', 'Viral NOS', "Whipple's disease", 'L&H nodular HD', 'L&H diffuse HD',
-        'Nodular sclerosis HD', 'Cellular phase NSHD', 'Syncytial NSHD', 'Mixed cellularity HD', 'Interfollicular HD',
-        'Diffuse fibrosis HD', 'Reticular-type HD', 'Small cleaved fol', 'Mixed fol', 'Large cell fol',
-        'Small noncleaved fol', 'Small lymphocytic', 'Plasmacytoid lyctic', 'Mantle zone lymphoma', 'Small cleaved dif',
-        'Mixed FCC dif', 'Large cell dif', 'B-immunoblastic', 'T-immunob mixed', 'AILD-like T-cell lym', 'Japanese ATL',
-        'Lymphoblastic', 'Small noncleaved dif', 'True histiocytic', 'Ki-1 LC anaplas T', 'Multiple myeloma',
-        'Mycosis fungoides', 'AML', 'Hairy cell leukemia', 'Carcinoma', 'Melanoma', 'EM plasmacytoma',
-        "Kaposi's sarcoma", 'Mast-cell disease', 'AIDS involutionary', 'T-immunob large', 'Monocytoid B-cell',
-        'Nasopharyngeal CA', 'Seminoma', 'SLE', 'Mycobact histiocytos', 'Mast-cell hyperplas', 'LGV', 'Histoplasmosis',
-        'Coccidioidomycosis', 'CMV', 'Brucellosis', 'Ki-1 LC anaplas B', 'Intermed lymphocytic'))
+            'AIDS early', 'AILD', 'ALIP', 'Cat scratch disease', 'Dermatopathic laden', 'Florid follic hyperp',
+            'GLH hyaline vascular', 'GLH plasma cell', 'Granulomatous laden', 'Histiocytosis x', 'Infectious mono',
+            'Leprosy-lepromatous', 'Lymphangiographic', 'Mantle zone hyperpla', 'Necrotizing Kikuchi',
+            'Necrotiz non-Kikuchi', 'Rheumatoid arthritis', 'Sarcoidosis', 'SHML', 'Sinus histiocytosis', 'Syphilis',
+            'Toxoplasmosis', 'Tuberculosis', 'Viral NOS', "Whipple's disease", 'L&H nodular HD', 'L&H diffuse HD',
+            'Nodular sclerosis HD', 'Cellular phase NSHD', 'Syncytial NSHD', 'Mixed cellularity HD',
+            'Interfollicular HD',
+            'Diffuse fibrosis HD', 'Reticular-type HD', 'Small cleaved fol', 'Mixed fol', 'Large cell fol',
+            'Small noncleaved fol', 'Small lymphocytic', 'Plasmacytoid lyctic', 'Mantle zone lymphoma',
+            'Small cleaved dif',
+            'Mixed FCC dif', 'Large cell dif', 'B-immunoblastic', 'T-immunob mixed', 'AILD-like T-cell lym',
+            'Japanese ATL',
+            'Lymphoblastic', 'Small noncleaved dif', 'True histiocytic', 'Ki-1 LC anaplas T', 'Multiple myeloma',
+            'Mycosis fungoides', 'AML', 'Hairy cell leukemia', 'Carcinoma', 'Melanoma', 'EM plasmacytoma',
+            "Kaposi's sarcoma", 'Mast-cell disease', 'AIDS involutionary', 'T-immunob large', 'Monocytoid B-cell',
+            'Nasopharyngeal CA', 'Seminoma', 'SLE', 'Mycobact histiocytos', 'Mast-cell hyperplas', 'LGV',
+            'Histoplasmosis',
+            'Coccidioidomycosis', 'CMV', 'Brucellosis', 'Ki-1 LC anaplas B', 'Intermed lymphocytic'))
         pgm_rv1 = self.new_rv('ACID', ('Negative', 'Positive'))
         pgm_rv2 = self.new_rv('F_CSA', ('No follicles', 'Absent', 'Present'))
         pgm_rv3 = self.new_rv('F_ISL', ('No follicles', 'Absent', 'Present'))
@@ -58,25 +66,27 @@ class Pathfinder(PGM):
                                ('Absent [0]', 'Rare [1-5]', 'Few [6-25]', 'Many [26-100]', 'Striking [>100]'))
         pgm_rv34 = self.new_rv('LH_NOD', ('Absent', 'Present'))
         pgm_rv35 = self.new_rv('LACUN', (
-        'Absent [0]', 'Rare [1-5]', 'Few [6-25]', 'Many [26 - 100]', 'Striking [>100]', 'Sheets [>50pc of section]'))
+            'Absent [0]', 'Rare [1-5]', 'Few [6-25]', 'Many [26 - 100]', 'Striking [>100]',
+            'Sheets [>50pc of section]'))
         pgm_rv36 = self.new_rv('LANG', ('Absent [0]', 'Present [1-5]', 'Prominent [>5]'))
         pgm_rv37 = self.new_rv('LEUK', ('Absent', 'Present'))
         pgm_rv38 = self.new_rv('LLC_CY', ('No LLCs', 'Scanty', 'Moderate-abundant clear', 'Moderate-abundant deep'))
         pgm_rv39 = self.new_rv('LLC_NS', (
-        'No LLCs', 'Multilobated [some]', 'Cerebriform/Mulberry [some]', 'Convoluted [some]', 'Irregular [most]',
-        'Round/slightly irregular [most]'))
+            'No LLCs', 'Multilobated [some]', 'Cerebriform/Mulberry [some]', 'Convoluted [some]', 'Irregular [most]',
+            'Round/slightly irregular [most]'))
         pgm_rv40 = self.new_rv('LLC', (
-        'Absent [0pc]', 'Sparse [<10pc]', 'Moderate [11-50pc]', 'Numerous [51-90pc]', 'Striking [>90pc]'))
+            'Absent [0pc]', 'Sparse [<10pc]', 'Moderate [11-50pc]', 'Numerous [51-90pc]', 'Striking [>90pc]'))
         pgm_rv41 = self.new_rv('F_POPU', (
-        'No follicles', '>80pc 6-12u', '>50pc 13-20u with nucleoli', '>50pc >20u with nucleoli', 'Other'))
+            'No follicles', '>80pc 6-12u', '>50pc 13-20u with nucleoli', '>50pc >20u with nucleoli', 'Other'))
         pgm_rv42 = self.new_rv('MAST', ('Absent [0]', 'Present [1-50]', 'Prominent [>50]'))
         pgm_rv43 = self.new_rv('MLC', (
-        'Absent [0pc]', 'Sparse [<10pc]', 'Moderate [11-50pc]', 'Numerous [51-90pc]', 'Striking [>90pc]'))
+            'Absent [0pc]', 'Sparse [<10pc]', 'Moderate [11-50pc]', 'Numerous [51-90pc]', 'Striking [>90pc]'))
         pgm_rv44 = self.new_rv('MELANOMA', ('Absent', 'Present'))
         pgm_rv45 = self.new_rv('MF10HP', ('0-5', '6-15', '16-50', '>50'))
         pgm_rv46 = self.new_rv('MLC_CY', ('No MLCs', 'Scanty', 'Moderate-abundant clear', 'Moderate-abundant deep'))
         pgm_rv47 = self.new_rv('MLC_NS', (
-        'No MLCs', 'Cerebriform [some]', 'Convoluted [some]', 'Irregular [most]', 'Round/slightly irregular [most]'))
+            'No MLCs', 'Cerebriform [some]', 'Convoluted [some]', 'Irregular [most]',
+            'Round/slightly irregular [most]'))
         pgm_rv48 = self.new_rv('MLC_NI', ('No MLCs', 'Absent to rare', 'Large central', 'Peripheral', 'Other'))
         pgm_rv49 = self.new_rv('MCC', ('Absent [0pc]', 'Present [<5pc]', 'Prominent [5-50pc]', 'Confluence [>50pc]'))
         pgm_rv50 = self.new_rv('MONO', ('Absent [0]', 'Rare [1-2]', 'Present [3-20]', 'Many [>20]'))
@@ -90,7 +100,8 @@ class Pathfinder(PGM):
         pgm_rv57 = self.new_rv('PAS', ('No', 'Yes'))
         pgm_rv58 = self.new_rv('PI', ('Absent', 'Present', 'Prominent'))
         pgm_rv59 = self.new_rv('PLASMA', (
-        'Absent [0pc]', 'Few [<5pc]', 'Moderate [6-20pc]', 'Marked [21-50pc]', 'Striking [51-90pc]', 'Sheets [>90pc]'))
+            'Absent [0pc]', 'Few [<5pc]', 'Moderate [6-20pc]', 'Marked [21-50pc]', 'Striking [51-90pc]',
+            'Sheets [>90pc]'))
         pgm_rv60 = self.new_rv('PC_TP', ('No plasma cells', 'Mature', 'Immature', 'Blastic', 'Pleomorphic', 'Mixed'))
         pgm_rv61 = self.new_rv('PLEO', ('Absent [0]', 'Rare [1-5]', 'Few [6-25]', 'Many [26-100]', 'Striking [>100]'))
         pgm_rv62 = self.new_rv('PFP', ('Absent', 'Present'))
@@ -101,10 +112,10 @@ class Pathfinder(PGM):
         pgm_rv67 = self.new_rv('S_RING', ('Absent', 'Present'))
         pgm_rv68 = self.new_rv('SLC_CY', ('No SLCs', 'Scanty', 'Moderate-abundant clear', 'Moderate-abundant deep'))
         pgm_rv69 = self.new_rv('SLC_NS', (
-        'No SLCs', 'Cerebriform [some]', 'Convoluted [some]', 'Moderate-mark irregular [most]',
-        'Round/slightly irregular [most]'))
+            'No SLCs', 'Cerebriform [some]', 'Convoluted [some]', 'Moderate-mark irregular [most]',
+            'Round/slightly irregular [most]'))
         pgm_rv70 = self.new_rv('SLC', (
-        'Absent [0pc]', 'Sparse [1-10pc]', 'Moderate [11-50pc]', 'Numerous [51-90pc]', 'Striking [>90pc]'))
+            'Absent [0pc]', 'Sparse [1-10pc]', 'Moderate [11-50pc]', 'Numerous [51-90pc]', 'Striking [>90pc]'))
         pgm_rv71 = self.new_rv('SINUSES', ('Distended', 'Patent', 'Part-greatly obliterated', 'Completely obliterated'))
         pgm_rv72 = self.new_rv('VASC_C', ('Absent', 'Present'))
         pgm_rv73 = self.new_rv('VASC_NS', ('Absent', 'Slight', 'Moderate', 'Marked', 'Pronounced'))
@@ -123,11 +134,12 @@ class Pathfinder(PGM):
         pgm_rv86 = self.new_rv('F_SS',
                                ('No follicles', 'Absent [0]', 'Slight [1-15]', 'Moderate [16-30]', 'Marked [>30]'))
         pgm_rv87 = self.new_rv('F_MZSTAT', (
-        'No follicles/no mantle zones', 'Mantle zones absent in most follicles', 'Most incompletely surround follicles',
-        'Most completely surround fol not thick', 'Most thick [>10 lymphocytes]'))
+            'No follicles/no mantle zones', 'Mantle zones absent in most follicles',
+            'Most incompletely surround follicles',
+            'Most completely surround fol not thick', 'Most thick [>10 lymphocytes]'))
         pgm_rv88 = self.new_rv('F_MZCM', ('No follicles/no mantle zones', 'Absent', 'Present'))
         pgm_rv89 = self.new_rv('F_DEF', (
-        'No follicles', 'Almost all well defined', 'Both well and poor defined', 'Almost all poor defined'))
+            'No follicles', 'Almost all well defined', 'Both well and poor defined', 'Almost all poor defined'))
         pgm_rv90 = self.new_rv('F_MITO', ('No follicles', '0-20', '21-50', '>50'))
         pgm_rv91 = self.new_rv('F_MZ', ('No follicles', 'Absent', 'Present'))
         pgm_rv92 = self.new_rv('F_CIO', ('No follicles', 'Most similar', 'Some similar', 'None similar'))
@@ -169,13 +181,14 @@ class Pathfinder(PGM):
         pgm_rv128 = self.new_rv('TB', ('Absent', 'Present', 'Prominent'))
         pgm_rv129 = self.new_rv('MELANIN', ('Absent to normal', 'Present', 'Prominent'))
         pgm_rv130 = self.new_rv('MC_SL_NS', (
-        'No follicles/no mantle zones', 'Round', 'Slightly irregular', 'Moderately irregular', 'Markedly irregular'))
+            'No follicles/no mantle zones', 'Round', 'Slightly irregular', 'Moderately irregular',
+            'Markedly irregular'))
         pgm_rv131 = self.new_rv('FMZ_FUS', (
-        'No thick mantle zones', 'No nodules no fusion', 'Nodules but no fusion', 'Fusion with or without nodules'))
+            'No thick mantle zones', 'No nodules no fusion', 'Nodules but no fusion', 'Fusion with or without nodules'))
         pgm_rv132 = self.new_rv('BH_NOS_L', ('No NOS benign histiocytes', 'Mainly interfollicular', 'Mainly sinusoidal',
                                              'Both interfollicular and sinusoidal'))
         pgm_rv133 = self.new_rv('SLC_NI', (
-        'No SLCs', 'None identifiable', '1 or more peripheral small', '1 central medium to large', 'Other'))
+            'No SLCs', 'None identifiable', '1 or more peripheral small', '1 central medium to large', 'Other'))
         pgm_rv134 = self.new_rv('HYALIN', ('Absent', 'Present', 'Prominent'))
         pgm_factor0 = self.new_factor(pgm_rv0)
         pgm_factor1 = self.new_factor(pgm_rv1, pgm_rv128)
@@ -315,22 +328,82 @@ class Pathfinder(PGM):
 
         pgm_function0 = pgm_factor0.set_dense()
         pgm_function0.set_flat(
-            20.0, 1.5, 5.0, 5.0, 25.0,
-            25.0, 5.0, 5.0, 15.0, 4.0,
-            2.0, 2.0, 5.0, 12.5, 8.0,
-            12.8, 2.0, 2.0, 3.0, 20.0,
-            2.0, 5.0, 4.0, 15.0, 0.5,
-            15.0, 2.5, 90.0, 8.0, 8.0,
-            70.0, 5.0, 3.0, 3.0, 110.0,
-            55.0, 20.0, 5.0, 40.0, 8.0,
-            10.0, 5.0, 6.0, 110.0, 20.0,
-            20.0, 12.0, 2.0, 10.0, 80.0,
-            1.0, 15.0, 2.0, 3.0, 5.0,
-            0.1, 20.0, 8.0, 5.0, 8.0,
-            2.0, 20.0, 25.0, 20.0, 5.0,
-            2.0, 2.0, 2.0, 2.0, 2.0,
-            2.0, 2.0, 5.0, 0.25, 4.0,
-            8.0
+            0.018279029,
+            0.001370927,
+            0.004569757,
+            0.004569757,
+            0.022848787,
+            0.022848787,
+            0.004569757,
+            0.004569757,
+            0.013709272,
+            0.003655806,
+            0.001827903,
+            0.001827903,
+            0.004569757,
+            0.011424393,
+            0.007311612,
+            0.011698579,
+            0.001827903,
+            0.001827903,
+            0.002741854,
+            0.018279029,
+            0.001827903,
+            0.004569757,
+            0.003655806,
+            0.013709272,
+            0.000456976,
+            0.013709272,
+            0.002284879,
+            0.082255632,
+            0.007311612,
+            0.007311612,
+            0.063976603,
+            0.004569757,
+            0.002741854,
+            0.002741854,
+            0.100534662,
+            0.050267331,
+            0.018279029,
+            0.004569757,
+            0.036558059,
+            0.007311612,
+            0.009139515,
+            0.004569757,
+            0.005483709,
+            0.100534662,
+            0.018279029,
+            0.018279029,
+            0.010967418,
+            0.001827903,
+            0.009139515,
+            0.073116118,
+            0.000913951,
+            0.013709272,
+            0.001827903,
+            0.002741854,
+            0.004569757,
+            9.13951E-05,
+            0.018279029,
+            0.007311612,
+            0.004569757,
+            0.007311612,
+            0.001827903,
+            0.018279029,
+            0.022848787,
+            0.018279029,
+            0.004569757,
+            0.001827903,
+            0.001827903,
+            0.001827903,
+            0.001827903,
+            0.001827903,
+            0.001827903,
+            0.001827903,
+            0.004569757,
+            0.000228488,
+            0.003655806,
+            0.007311612,
         )
 
         pgm_function1 = pgm_factor1.set_dense()

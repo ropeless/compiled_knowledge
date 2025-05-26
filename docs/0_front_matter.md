@@ -1,6 +1,6 @@
 # _front matter_
 
-Compiled Knowledge version 4.0.0a13, built 2025-05-23 17:13:49 (AUS Eastern Standard Time).
+Compiled Knowledge version 4.0.0a14, built 2025-05-26 13:29:08 (AUS Eastern Standard Time).
 
 These Jupyter notebooks form a reference for the software known as Compiled Knowledge, abbreviated as CK.
 
@@ -16,7 +16,7 @@ This documentation is available online at
 The primary repository for the project is
 [github.com/ropeless/compiled_knowledge](https://github.com/ropeless/compiled_knowledge).
 
-The Python package is available on PyPi, see
+The Python package is available on PyPI, see
 [pypi.org/project/compiled-knowledge](https://pypi.org/project/compiled-knowledge/).
 
 For more information email

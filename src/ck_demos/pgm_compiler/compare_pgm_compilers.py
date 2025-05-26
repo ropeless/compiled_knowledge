@@ -16,6 +16,7 @@ from ck_demos.utils.compare import compare
 CACHE_CIRCUITS: bool = True
 BREAK_BETWEEN_PGMS: bool = True
 COMMA_NUMBERS: bool = True
+PRINT_HEADER: bool = True
 
 PGMS: Sequence[PGM] = [
     example.Rain(),
@@ -52,6 +53,7 @@ def main() -> None:
         cache_circuits=CACHE_CIRCUITS,
         break_between_pgms=BREAK_BETWEEN_PGMS,
         comma_numbers=COMMA_NUMBERS,
+        print_header=PRINT_HEADER,
     )
     print()
     print('Done.')

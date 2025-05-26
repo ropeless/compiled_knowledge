@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
-from typing import Tuple, Optional, Dict, List
+from typing import Tuple, Optional, Dict, List, Sequence
 
 import numpy as np
 
 from ck.circuit import Circuit, CircuitNode, VarNode, ConstValue, ConstNode
 from ck.in_out.parse_ace_lmap import LiteralMap
 from ck.in_out.parser_utils import ParseError, ParserInput
+from ck.pgm import Indicator
 from ck.pgm_circuit.slot_map import SlotKey, SlotMap
 from ck.utils.np_extras import NDArrayFloat64
 
@@ -18,9 +19,9 @@ def read_nnf_with_literal_map(
         input_stream,
         literal_map: LiteralMap,
         *,
+        indicators: Sequence[Indicator] = (),
         const_parameters: bool = True,
         optimise_ops: bool = True,
-        circuit: Optional[Circuit] = None,
         check_header: bool = False,
 ) -> Tuple[CircuitNode, SlotMap, NDArrayFloat64]:
     """
@@ -31,8 +32,8 @@ def read_nnf_with_literal_map(
 
     Args:
         input_stream: to parse, as per `ParserInput` argument.
+        indicators: any indicators to pre allocate to circuit variables.
         literal_map: mapping from literal code to indicators.
-        circuit: an optional circuit to reuse.
         check_header: if true, an exception is raised if the number of nodes or arcs is not as expected.
         const_parameters: if true, the potential function parameters will be circuit
             constants, otherwise they will be circuit variables.
@@ -44,6 +45,7 @@ def read_nnf_with_literal_map(
         slot_map: is a map from indicator to a circuit var index (int).
         params: is a numpy array of parameter values, co-indexed with `circuit.vars[num_indicators:]`
     """
+    circuit = Circuit()
 
     # Set the `const_literals` parameter for `read_nnf`
     const_literals: Optional[Dict[int, ConstValue]]
@@ -57,38 +59,42 @@ def read_nnf_with_literal_map(
     else:
         const_literals = {}
 
-    top_node, literal_slot_map = read_nnf(
+    # Make a slot map to map from an indicator to a circuit variable index.
+    # Preload `var_literals` to map literal codes to circuit vars.
+    # We allocate the circuit variables here to ensure that indicators
+    # come before parameters in the circuit variables.
+    slot_map: Dict[SlotKey, int] = {
+        indicator: i
+        for i, indicator in enumerate(indicators)
+    }
+    circuit.new_vars(len(slot_map))
+    var_literals: Dict[int, int] = {}
+    for literal_code, indicator in literal_map.indicators.items():
+        slot = slot_map.get(indicator)
+        if slot is None:
+            slot = circuit.new_var().idx
+            slot_map[indicator] = slot
+        var_literals[literal_code] = slot
+    num_indicators: int = len(slot_map)
+
+    # Parse the nnf file
+    top_node, vars_literals = read_nnf(
         input_stream,
+        var_literals=var_literals,
         const_literals=const_literals,
         circuit=circuit,
         check_header=check_header,
         optimise_ops=optimise_ops,
     )
-    circuit = top_node.circuit
 
-    # Build the slot map from indicator to slot.
-    # Some indicators may not be in `literal_slot_map` because they were not needed
-    # for the arithmetic circuit in the NNF file. For those indicators, we create
-    # dummy circuit vars.
-    def _get_slot(_literal_code: int) -> int:
-        _slot: Optional[int] = literal_slot_map.get(_literal_code)
-        if _slot is None:
-            _slot: int = circuit.new_var().idx
-        return _slot
-
-    slot_map: Dict[SlotKey, int] = {
-        indicator: _get_slot(literal_code)
-        for literal_code, indicator in literal_map.indicators.items()
-    }
-
-    # Get the parameter values
-    num_indicators: int = len(literal_map.indicators)
+    # Get the parameter values.
+    # Any new circuit vars added to the circuit are parameters.
+    # Parameter IDs are not added to the slot map as we don't know them.
     num_parameters: int = top_node.circuit.number_of_vars - num_indicators
     assert num_parameters == 0 or not const_parameters, 'const_parameters -> num_parameters == 0'
-
     params: NDArrayFloat64 = np.zeros(num_parameters, dtype=np.float64)
     for literal_code, value in literal_map.params.items():
-        literal_slot: Optional[int] = literal_slot_map.get(literal_code)
+        literal_slot: Optional[int] = var_literals.get(literal_code)
         if literal_slot is not None and literal_slot >= num_indicators:
             params[literal_slot - num_indicators] = value
 
@@ -98,6 +104,7 @@ def read_nnf_with_literal_map(
 def read_nnf(
         input_stream,
         *,
+        var_literals: Optional[Dict[int, int]] = None,
         const_literals: Optional[Dict[int, ConstValue]] = None,
         circuit: Optional[Circuit] = None,
         check_header: bool = False,
@@ -109,44 +116,51 @@ def read_nnf(
     The input consists of propositional logical sentences in negative normal form (NNF).
     This covers both ".ac" and ".nnf" files produced by the software ACE.
 
-    The returned slot map will have entries to get circuit vars for literal codes.
-    E.g., given a literal code (int), use `circuit.vars[slot_map[literal_code]]` to get its var node.
+    This function returns the last node parsed (or the constant zero node if no nodes passed).
+    It also returns a mapping from literal code (int) to circuit variable index.
 
-    Software may simplify an NNF file by removing arcs, but it may not update the header.
-    Although the resulting file is not conformant, it is still parsable.
-    Parameter `check_header` can be set to false, which prevents an exception being raised.
+    Two optional dictionaries may be supplied. Dictionary `var_literals` maps a literal
+    code to a pre-existing circuit variable index. Dictionary `const_literals` maps a literal
+    code to a constant value. A literal code should not appear in both dictionaries.
+
+    Any literal code that is parsed but does not appear in `var_literals` or `const_literals`
+    results in a new circuit variable being created and a corresponding entry added to
+    `var_literals`.
+
+    External software may modify an NNF file by removing arcs, but it may not update the header.
+    Although the resulting file is not conformant, it is still parsable (by ignoring the header).
+    Parameter `check_header` can be set to true, which causes an exception being raised if the
+    header disagrees with the rest of the file.
 
     Args:
         input_stream: to parse, as per `ParserInput` argument.
+        var_literals: an optional mapping from literal code to existing circuit variable index.
         const_literals: an optional mapping from literal code to constant value.
         circuit: an optional empty circuit to reuse.
         check_header: if true, an exception is raised if the number of nodes or arcs is not as expected.
         optimise_ops: if true then circuit optimised operations will be used.
 
     Returns:
-        (circuit_top, literal_slot_map)
+        (circuit_top, var_literals)
         circuit_top: is the resulting top node from parsing the input.
-        literal_slot_map: is a mapping from literal code (int) to a circuit var index (int).
-
-    Assumes:
-        If a circuit is provided, it is empty.
+        var_literals: is a mapping from literal code (int) to a circuit variable index (int).
     """
     if circuit is None:
         circuit: Circuit = Circuit()
 
-    if circuit.number_of_vars != 0:
-        raise ValueError('the given circuit must be empty')
+    if var_literals is None:
+        var_literals: Dict[int, int] = {}
 
     if const_literals is None:
         const_literals: Dict[int, ConstValue] = {}
 
-    parser = CircuitParser(circuit, check_header, const_literals, optimise_ops)
+    parser = CircuitParser(circuit, check_header, var_literals, const_literals, optimise_ops)
     parser.parse(input_stream)
 
     nodes = parser.nodes
     cct_top = circuit.zero if len(nodes) == 0 else nodes[-1]
 
-    return cct_top, parser.literal_slot_map
+    return cct_top, var_literals
 
 
 class Parser(ABC):
@@ -198,6 +212,8 @@ class Parser(ABC):
                                     self.add_node(raise_f, args)
                                 else:
                                     self.mul_node(raise_f, args)
+                    else:
+                        raise_f(f'unexpected parser state: {state}')
                 line = input_stream.readline()
             self.done(raise_f)
         except ParseError as e:
@@ -236,17 +252,18 @@ class CircuitParser(Parser):
             self,
             circuit: Circuit,
             check_header: bool,
+            var_literals: Dict[int, int],
             const_literals: Dict[int, ConstValue],
             optimise_ops: bool,
     ):
         self.check_header: bool = check_header
-        self.literal_slot_map: Dict[SlotKey, int] = {}
-        self.optimise_ops = optimise_ops
-        self.circuit = circuit
+        self.var_literals: Dict[int, int] = var_literals
         self.const_literals: Dict[int, ConstValue] = const_literals
+        self.optimise_ops: bool = optimise_ops
+        self.circuit: Circuit = circuit
         self.nodes: List[CircuitNode] = []
-        self.num_nodes = None
-        self.num_edges = None
+        self.num_nodes = None  # read from the file header for checking
+        self.num_edges = None  # read from the file header for checking
 
     def comment(self, raise_f, message: str) -> None:
         pass
@@ -257,13 +274,20 @@ class CircuitParser(Parser):
         """
         const_value: Optional[ConstValue] = self.const_literals.get(literal_code)
         if const_value is not None:
+            # Literal code maps to a constant value
+            if literal_code in self.var_literals:
+                raise_f('literal code both constant and variable: {literal_code}')
             node: ConstNode = self.circuit.const(const_value)
-        elif literal_code in self.literal_slot_map.keys():
-            raise_f(f'duplicated literal code: {literal_code}')
-            return
+
+        elif (var_idx := self.var_literals.get(literal_code)) is not None:
+            # Literal code maps to an existing circuit variable
+            node: VarNode = self.circuit.vars[var_idx]
+
         else:
+            # Literal code maps to a new circuit variable
             node: VarNode = self.circuit.new_var()
-            self.literal_slot_map[literal_code] = node.idx
+            self.var_literals[literal_code] = node.idx
+
         self.nodes.append(node)
 
     def add_node(self, raise_f, args: List[int]) -> None:

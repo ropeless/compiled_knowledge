@@ -16,6 +16,8 @@ def compare(
         cache_circuits: bool = True,
         break_between_pgms: bool = True,
         comma_numbers: bool = True,
+        print_header: bool = True,
+        sep: str = '  ',
 ) -> None:
     """
     For each combination of the given arguments, construct a PGMCircuit (using a
@@ -40,24 +42,33 @@ def compare(
         cache_circuits: if true, then circuits are reused across different circuit compilers.
         break_between_pgms: if true, print a blank line  between different workload PGMs.
         comma_numbers: if true, commas are used in large numbers.
+        print_header: if true, a header line is printed.
+        sep: column separator.
     """
     # Work out column widths for names.
-    col_pgm_name: int = max(len(pgm.name) for pgm in pgms)
-    col_pgm_compiler_name: int = max(len(pgm_compiler.name) for pgm_compiler in pgm_compilers)
-    col_cct_compiler_name: int = max(len(cct_compiler.name) for cct_compiler in cct_compilers)
+    col_pgm_name: int = max(3, max(len(pgm.name) for pgm in pgms))
+    col_pgm_compiler_name: int = max(12, max(len(pgm_compiler.name) for pgm_compiler in pgm_compilers))
+    col_cct_compiler_name: int = max(12, max(len(cct_compiler.name) for cct_compiler in cct_compilers))
     col_cct_ops: int = 10
-    col_pgm_compile_time: int = 10
-    col_cct_compile_time: int = 10
+    col_pgm_compile_time: int = 16
+    col_cct_compile_time: int = 16
     col_execute_time: int = 10
+
+    # Print formatting
+    comma: str = ',' if comma_numbers else ''
+
+    if print_header:
+        print('PGM'.ljust(col_pgm_name), end=sep)
+        print('PGM-compiler'.ljust(col_pgm_compiler_name), end=sep)
+        print('CCT-compiler'.ljust(col_cct_compiler_name), end=sep)
+        print('CCT-ops'.rjust(col_cct_ops), end=sep)
+        print('PGM-compile-time'.rjust(col_pgm_compile_time), end=sep)
+        print('CCT-compile-time'.rjust(col_cct_compile_time), end=sep)
+        print('Run-time'.rjust(col_execute_time))
 
     # Variables for when cache_circuits is true
     prev_pgm = None
     prev_pgm_compiler = None
-
-    if comma_numbers:
-        comma = ','
-    else:
-        comma = ''
 
     for pgm in pgms:
         pgm_name: str = pgm.name.ljust(col_pgm_name)
@@ -66,23 +77,23 @@ def compare(
             for cct_compiler in cct_compilers:
                 cct_compiler_name: str = cct_compiler.name.ljust(col_cct_compiler_name)
 
-                print(f'{pgm_name}  ', end='')
-                print(f'{pgm_compiler_name}  ', end='')
-                print(f'{cct_compiler_name}  ', end='')
+                print(pgm_name, end=sep)
+                print(pgm_compiler_name, end=sep)
+                print(cct_compiler_name, end=sep)
 
                 try:
                     time = StopWatch()
 
                     if cache_circuits and pgm is prev_pgm and pgm_compiler is prev_pgm_compiler:
-                        print(f'{"":{col_cct_ops}} ', end='')
-                        print(f'{"":{col_pgm_compile_time}}  ', end='')
+                        print(f'{"":{col_cct_ops}}', end=sep)
+                        print(f'{"":{col_pgm_compile_time}}', end=sep)
                     else:
                         time.start()
                         pgm_cct: PGMCircuit = pgm_compiler(pgm)
                         time.stop()
                         num_ops: int = pgm_cct.circuit_top.circuit.number_of_operations
-                        print(f'{num_ops:{col_cct_ops}{comma}} ', end='')
-                        print(f'{time.seconds():{col_pgm_compile_time}{comma}.3f} ', end='')
+                        print(f'{num_ops:{col_cct_ops}{comma}}', end=sep)
+                        print(f'{time.seconds():{col_pgm_compile_time}{comma}.3f}', end=sep)
                         prev_pgm = pgm
                         prev_pgm_compiler = pgm_compiler
 
@@ -91,16 +102,15 @@ def compare(
                     # noinspection PyUnboundLocalVariable
                     wmc = WMCProgram(pgm_cct, compiler=cct_compiler.compiler)
                     time.stop()
-                    print(f'{time.seconds():{col_cct_compile_time}{comma}.3f} ', end='')
+                    print(f'{time.seconds():{col_cct_compile_time}{comma}.3f}', end=sep)
 
                     time.start()
                     for _ in range(1000):
                         wmc.compute()
                     time.stop()
-                    print(f'{time.seconds() * 1000:{col_execute_time}{comma}.3f} ', end='')
+                    print(f'{time.seconds() * 1000:{col_execute_time}{comma}.3f}', end=sep)
                 except Exception as err:
                     print(repr(err), end='')
-
                 print()
         if break_between_pgms:
             print()

@@ -32,7 +32,7 @@ class ParserInput:
     def __init__(self, input_stream):
         self._input = _check_input(input_stream)
         self._prev_line_len = 0
-        self._cur_line = 1
+        self._cur_line = 0
         self._cur_char = 1
         self._lookahead = []
 

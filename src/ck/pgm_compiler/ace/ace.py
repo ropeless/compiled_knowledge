@@ -121,8 +121,9 @@ def compile_pgm(
             parameter_values: NDArrayFloat64
             circuit_top, slot_map, parameter_values = read_nnf_with_literal_map(
                 file,
+                indicators=pgm.indicators,
                 literal_map=literal_map,
-                const_parameters=const_parameters
+                const_parameters=const_parameters,
             )
 
     # Consistency checking

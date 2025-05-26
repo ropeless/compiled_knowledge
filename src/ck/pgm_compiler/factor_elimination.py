@@ -21,7 +21,7 @@ def compile_pgm(
         *,
         algorithm: JoinTreeAlgorithm = MIN_FILL_THEN_DEGREE,
         limit_product_tree_search: int = DEFAULT_PRODUCT_SEARCH_LIMIT,
-        pre_prune_factor_tables: bool = True,
+        pre_prune_factor_tables: bool = False,
 ) -> PGMCircuit:
     """
     Compile the PGM to an arithmetic circuit, using factor elimination.
@@ -60,7 +60,7 @@ def compile_pgm_best_jointree(
         const_parameters: bool = True,
         *,
         limit_product_tree_search: int = DEFAULT_PRODUCT_SEARCH_LIMIT,
-        pre_prune_factor_tables: bool = True,
+        pre_prune_factor_tables: bool = False,
 ) -> PGMCircuit:
     """
     Try multiple elimination heuristics, and use the join tree that has
@@ -114,7 +114,7 @@ def join_tree_to_circuit(
         join_tree: JoinTree,
         const_parameters: bool = True,
         limit_product_tree_search: int = DEFAULT_PRODUCT_SEARCH_LIMIT,
-        pre_prune_factor_tables: bool = True,
+        pre_prune_factor_tables: bool = False,
 ) -> PGMCircuit:
     """
     Construct a PGMCircuit from a join-tree.

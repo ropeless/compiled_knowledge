@@ -18,32 +18,32 @@ class NamedPGMCompiler(Enum):
     """
     # @formatter:off
 
-    VE_MIN_DEGREE: PGMCompiler = _get_compiler_algorithm(variable_elimination, 'MIN_DEGREE')
-    VE_MIN_DEGREE_THEN_FILL: PGMCompiler = _get_compiler_algorithm(variable_elimination, 'MIN_DEGREE_THEN_FILL')
-    VE_MIN_FILL: PGMCompiler = _get_compiler_algorithm(variable_elimination, 'MIN_FILL')
-    VE_MIN_FILL_THEN_DEGREE: PGMCompiler = _get_compiler_algorithm(variable_elimination, 'MIN_FILL_THEN_DEGREE')
-    VE_MIN_WEIGHTED_DEGREE: PGMCompiler = _get_compiler_algorithm(variable_elimination, 'MIN_WEIGHTED_DEGREE')
-    VE_MIN_WEIGHTED_FILL: PGMCompiler = _get_compiler_algorithm(variable_elimination, 'MIN_WEIGHTED_FILL')
-    VE_MIN_TRADITIONAL_WEIGHTED_FILL: PGMCompiler = _get_compiler_algorithm(variable_elimination, 'MIN_TRADITIONAL_WEIGHTED_FILL')
+    VE_MIN_DEGREE = _get_compiler_algorithm(variable_elimination, 'MIN_DEGREE')
+    VE_MIN_DEGREE_THEN_FILL = _get_compiler_algorithm(variable_elimination, 'MIN_DEGREE_THEN_FILL')
+    VE_MIN_FILL = _get_compiler_algorithm(variable_elimination, 'MIN_FILL')
+    VE_MIN_FILL_THEN_DEGREE = _get_compiler_algorithm(variable_elimination, 'MIN_FILL_THEN_DEGREE')
+    VE_MIN_WEIGHTED_DEGREE = _get_compiler_algorithm(variable_elimination, 'MIN_WEIGHTED_DEGREE')
+    VE_MIN_WEIGHTED_FILL = _get_compiler_algorithm(variable_elimination, 'MIN_WEIGHTED_FILL')
+    VE_MIN_TRADITIONAL_WEIGHTED_FILL = _get_compiler_algorithm(variable_elimination, 'MIN_TRADITIONAL_WEIGHTED_FILL')
 
-    FE_MIN_DEGREE: PGMCompiler = _get_compiler_algorithm(factor_elimination, 'MIN_DEGREE')
-    FE_MIN_DEGREE_THEN_FILL: PGMCompiler = _get_compiler_algorithm(factor_elimination, 'MIN_DEGREE_THEN_FILL')
-    FE_MIN_FILL: PGMCompiler = _get_compiler_algorithm(factor_elimination, 'MIN_FILL')
-    FE_MIN_FILL_THEN_DEGREE: PGMCompiler = _get_compiler_algorithm(factor_elimination, 'MIN_FILL_THEN_DEGREE')
-    FE_MIN_WEIGHTED_DEGREE: PGMCompiler = _get_compiler_algorithm(factor_elimination, 'MIN_WEIGHTED_DEGREE')
-    FE_MIN_WEIGHTED_FILL: PGMCompiler = _get_compiler_algorithm(factor_elimination, 'MIN_WEIGHTED_FILL')
-    FE_MIN_TRADITIONAL_WEIGHTED_FILL: PGMCompiler = _get_compiler_algorithm(factor_elimination, 'MIN_TRADITIONAL_WEIGHTED_FILL')
-    FE_BEST_JOINTREE: PGMCompiler = factor_elimination.compile_pgm_best_jointree,
+    FE_MIN_DEGREE = _get_compiler_algorithm(factor_elimination, 'MIN_DEGREE')
+    FE_MIN_DEGREE_THEN_FILL = _get_compiler_algorithm(factor_elimination, 'MIN_DEGREE_THEN_FILL')
+    FE_MIN_FILL = _get_compiler_algorithm(factor_elimination, 'MIN_FILL')
+    FE_MIN_FILL_THEN_DEGREE = _get_compiler_algorithm(factor_elimination, 'MIN_FILL_THEN_DEGREE')
+    FE_MIN_WEIGHTED_DEGREE = _get_compiler_algorithm(factor_elimination, 'MIN_WEIGHTED_DEGREE')
+    FE_MIN_WEIGHTED_FILL = _get_compiler_algorithm(factor_elimination, 'MIN_WEIGHTED_FILL')
+    FE_MIN_TRADITIONAL_WEIGHTED_FILL = _get_compiler_algorithm(factor_elimination, 'MIN_TRADITIONAL_WEIGHTED_FILL')
+    FE_BEST_JOINTREE = factor_elimination.compile_pgm_best_jointree,
 
-    RC_MIN_DEGREE: PGMCompiler = _get_compiler_algorithm(recursive_conditioning, 'MIN_DEGREE')
-    RC_MIN_DEGREE_THEN_FILL: PGMCompiler = _get_compiler_algorithm(recursive_conditioning, 'MIN_DEGREE_THEN_FILL')
-    RC_MIN_FILL: PGMCompiler = _get_compiler_algorithm(recursive_conditioning, 'MIN_FILL')
-    RC_MIN_FILL_THEN_DEGREE: PGMCompiler = _get_compiler_algorithm(recursive_conditioning, 'MIN_FILL_THEN_DEGREE')
-    RC_MIN_WEIGHTED_DEGREE: PGMCompiler = _get_compiler_algorithm(recursive_conditioning, 'MIN_WEIGHTED_DEGREE')
-    RC_MIN_WEIGHTED_FILL: PGMCompiler = _get_compiler_algorithm(recursive_conditioning, 'MIN_WEIGHTED_FILL')
-    RC_MIN_TRADITIONAL_WEIGHTED_FILL: PGMCompiler = _get_compiler_algorithm(recursive_conditioning, 'MIN_TRADITIONAL_WEIGHTED_FILL')
+    RC_MIN_DEGREE = _get_compiler_algorithm(recursive_conditioning, 'MIN_DEGREE')
+    RC_MIN_DEGREE_THEN_FILL = _get_compiler_algorithm(recursive_conditioning, 'MIN_DEGREE_THEN_FILL')
+    RC_MIN_FILL = _get_compiler_algorithm(recursive_conditioning, 'MIN_FILL')
+    RC_MIN_FILL_THEN_DEGREE = _get_compiler_algorithm(recursive_conditioning, 'MIN_FILL_THEN_DEGREE')
+    RC_MIN_WEIGHTED_DEGREE = _get_compiler_algorithm(recursive_conditioning, 'MIN_WEIGHTED_DEGREE')
+    RC_MIN_WEIGHTED_FILL = _get_compiler_algorithm(recursive_conditioning, 'MIN_WEIGHTED_FILL')
+    RC_MIN_TRADITIONAL_WEIGHTED_FILL = _get_compiler_algorithm(recursive_conditioning, 'MIN_TRADITIONAL_WEIGHTED_FILL')
 
-    ACE: PGMCompiler = _get_compiler(ace)
+    ACE = _get_compiler(ace)
 
     # @formatter:on
 

@@ -28,7 +28,7 @@ def compile_pgm(
         const_parameters: bool = True,
         *,
         algorithm: ClusterAlgorithm = MIN_FILL_THEN_DEGREE,
-        pre_prune_factor_tables: bool = True,
+        pre_prune_factor_tables: bool = False,
 ) -> PGMCircuit:
     """
     Compile the PGM to an arithmetic circuit, using recursive conditioning.

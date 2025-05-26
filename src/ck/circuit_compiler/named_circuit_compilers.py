@@ -18,19 +18,19 @@ class NamedCircuitCompiler(Enum):
     Each member itself is callable, conforming to the CircuitCompiler protocol, delegating to the compiler function.
     """
 
-    LLVM_STACK: CircuitCompiler = (partial(llvm_compiler.compile_circuit, flavour=Flavour.STACK),)
-    LLVM_TMPS: CircuitCompiler = (partial(llvm_compiler.compile_circuit, flavour=Flavour.TMPS, opt=0),)
-    LLVM_VM: CircuitCompiler = (llvm_vm_compiler.compile_circuit,)
-    CYTHON_VM: CircuitCompiler = (cython_vm_compiler.compile_circuit,)
-    INTERPRET: CircuitCompiler = (interpret_compiler.compile_circuit,)
+    LLVM_STACK = (partial(llvm_compiler.compile_circuit, flavour=Flavour.STACK),)
+    LLVM_TMPS = (partial(llvm_compiler.compile_circuit, flavour=Flavour.TMPS, opt=0),)
+    LLVM_VM = (llvm_vm_compiler.compile_circuit,)
+    CYTHON_VM = (cython_vm_compiler.compile_circuit,)
+    INTERPRET = (interpret_compiler.compile_circuit,)
 
-    # The following circuit compilers were experimental but are not really useful
+    # The following circuit compilers were experimental but are not really useful.
     #
     # Slow compile and execution:
-    # LLVM_FUNCS: CircuitCompiler = (partial(llvm_compiler.compile_circuit, flavour=Flavour.FUNCS, opt=0),)
+    # LLVM_FUNCS = (partial(llvm_compiler.compile_circuit, flavour=Flavour.FUNCS, opt=0),)
     #
     # Slow compile and same execution as LLVM_VM:
-    # LLVM_VM_COMPILED_ARRAYS: CircuitCompiler = (partial(llvm_vm_compiler.compile_circuit, compile_arrays=True),)
+    # LLVM_VM_COMPILED_ARRAYS = (partial(llvm_vm_compiler.compile_circuit, compile_arrays=True),)
 
     def __call__(
             self,

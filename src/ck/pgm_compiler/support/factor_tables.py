@@ -269,40 +269,48 @@ def _pre_prune_factor_tables(factor_rows: Sequence[_FactorRows]) -> None:
     will be formed, which may eliminate rows. This method identifies and removes
     such rows.
     """
+    # Find all pairs of factors that have at least one common random variable.
     pairs_to_check: List[_FactorPair] = [
         _FactorPair(f1, f2)
         for f1, f2 in pairs(factor_rows)
         if not set(f1.rv_indexes).isdisjoint(f1.rv_indexes)
     ]
 
-    pairs_done: List[_FactorPair] = []
-
-    while len(pairs_to_check) > 0:
-        pair = pairs_to_check.pop()
-        x = pair.x
-        y = pair.y
-
-        x_size = len(x)
-        y_size = len(y)
+    # Simple version.
+    for pair in pairs_to_check:
         pair.prune()
 
-        # See if any pairs need re-checking
-        rvs_affected: Set[int] = set()
-        if x_size != len(x):
-            rvs_affected.update(x.rv_indexes)
-        if y_size != len(y):
-            rvs_affected.update(y.rv_indexes)
-        if len(rvs_affected) > 0:
-            next_pairs_done: List[_FactorPair] = []
-            for pair in pairs_done:
-                if rvs_affected.isdisjoint(pair.all_rv_indexes):
-                    next_pairs_done.append(pair)
-                else:
-                    pairs_to_check.append(pair)
-            pairs_done = next_pairs_done
-
-        # Mark the current pair as done.
-        pairs_done.append(pair)
+    # Earlier version.
+    # This version re-checks processed pairs that may get benefit from a subsequent pruning.
+    # Unfortunately, this is computationally expensive, and provides no practical benefit.
+    #
+    # pairs_done: List[_FactorPair] = []
+    # while len(pairs_to_check) > 0:
+    #     pair: _FactorPair = pairs_to_check.pop()
+    #     x: _FactorRows = pair.x
+    #     y: _FactorRows = pair.y
+    #
+    #     x_size = len(x)
+    #     y_size = len(y)
+    #     pair.prune()
+    #
+    #     # See if any pairs need re-checking
+    #     rvs_affected: Set[int] = set()
+    #     if x_size != len(x):
+    #         rvs_affected.update(x.rv_indexes)
+    #     if y_size != len(y):
+    #         rvs_affected.update(y.rv_indexes)
+    #     if len(rvs_affected) > 0:
+    #         next_pairs_done: List[_FactorPair] = []
+    #         for pair in pairs_done:
+    #             if rvs_affected.isdisjoint(pair.all_rv_indexes):
+    #                 next_pairs_done.append(pair)
+    #             else:
+    #                 pairs_to_check.append(pair)
+    #         pairs_done = next_pairs_done
+    #
+    #     # Mark the current pair as done.
+    #     pairs_done.append(pair)
 
 
 def _make_factor_table(

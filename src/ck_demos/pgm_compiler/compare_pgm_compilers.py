@@ -33,13 +33,13 @@ PGMS: Sequence[PGM] = [
     example.Mildew(),
 ]
 
-CCT_COMPILERS: Sequence[NamedCircuitCompiler] = [DEFAULT_CIRCUIT_COMPILER]
-
 PGM_COMPILERS: Sequence[NamedPGMCompiler] = [
     named_compiler
     for named_compiler in NamedPGMCompiler
     if named_compiler.name.startswith('FE_') and 'WEIGHTED' not in named_compiler.name
 ] + [NamedPGMCompiler.ACE]
+
+CCT_COMPILERS: Sequence[NamedCircuitCompiler] = [DEFAULT_CIRCUIT_COMPILER]
 
 # @formatter:on
 

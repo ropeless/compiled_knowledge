@@ -64,10 +64,20 @@ def read_nnf_with_literal_map(
         check_header=check_header,
         optimise_ops=optimise_ops,
     )
+    circuit = top_node.circuit
 
-    # Build the slot map from indicator to slot
+    # Build the slot map from indicator to slot.
+    # Some indicators may not be in `literal_slot_map` because they were not needed
+    # for the arithmetic circuit in the NNF file. For those indicators, we create
+    # dummy circuit vars.
+    def _get_slot(_literal_code: int) -> int:
+        _slot: Optional[int] = literal_slot_map.get(_literal_code)
+        if _slot is None:
+            _slot: int = circuit.new_var().idx
+        return _slot
+
     slot_map: Dict[SlotKey, int] = {
-        indicator: literal_slot_map[literal_code]
+        indicator: _get_slot(literal_code)
         for literal_code, indicator in literal_map.indicators.items()
     }
 
@@ -193,7 +203,7 @@ class Parser(ABC):
         except ParseError as e:
             raise e
         except Exception as e:
-            input_stream.raise_error(e)
+            input_stream.raise_error(str(e))
 
     @abstractmethod
     def comment(self, raise_f, message: str) -> None:

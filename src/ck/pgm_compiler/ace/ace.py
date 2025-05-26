@@ -101,16 +101,13 @@ def compile_pgm(
             node_names: List[str] = render_bayesian_network(pgm, file, check_structure_bayesian=False)
 
         # Run Ace
-        ace_result: subprocess.CompletedProcess = subprocess.run(ace_cmd, capture_output=True, text=True)
-        if print_output:
-            print(ace_result.stdout)
-            print(ace_result.stderr)
+        ace_result: subprocess.CompletedProcess = subprocess.run(ace_cmd, capture_output=(not print_output), text=True)
         if ace_result.returncode != 0:
             raise subprocess.CalledProcessError(
                 returncode=ace_result.returncode,
                 cmd=' '.join(ace_cmd),
-                output=ace_result.stdout,
-                stderr=ace_result.stderr,
+                output=None if print_output else ace_result.stdout,
+                stderr=None if print_output else ace_result.stderr,
             )
 
         # Parse the literal map output from Ace

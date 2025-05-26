@@ -108,7 +108,7 @@ class Parser(ABC):
         except ParseError as e:
             raise e
         except Exception as e:
-            input_stream.raise_error(e)
+            input_stream.raise_error(str(e))
 
     @abstractmethod
     def comment(self, raise_f, message: str) -> None:

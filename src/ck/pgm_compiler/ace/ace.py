@@ -14,6 +14,7 @@ from ck.in_out.render_net import render_bayesian_network
 from ck.pgm import PGM
 from ck.pgm_circuit import PGMCircuit
 from ck.pgm_circuit.slot_map import SlotMap
+from ck.utils.local_config import config
 from ck.utils.np_extras import NDArrayFloat64
 from ck.utils.tmp_dir import tmp_dir
 
@@ -199,8 +200,12 @@ def copy_ace_to_default_location(
 def default_ace_location() -> Path:
     """
     Get the default location for Ace files.
+
+    This function checks the local config for the variable
+    CK_ACE_LOCATION. If that is not available, then the
+    directory that this Python module is in will be used.
     """
-    return Path(__file__).parent
+    return Path(config.get('CK_ACE_LOCATION', Path(__file__).parent))
 
 
 @dataclass

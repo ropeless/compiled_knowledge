@@ -1,6 +1,6 @@
 # _front matter_
 
-Compiled Knowledge version 4.0.0a16, built 2025-05-27 14:52:54 (AUS Eastern Standard Time).
+Compiled Knowledge version 4.0.0a17, built 2025-05-28 20:37:33 (AUS Eastern Standard Time).
 
 These Jupyter notebooks form a reference for the software known as Compiled Knowledge, abbreviated as CK.
 

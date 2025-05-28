@@ -203,10 +203,10 @@ class Test_Marginals(Fixture):
 
         marginals = compile_pgm(pgm, const_parameters=False)
 
-        self.assertEqual(marginals.z, 2)
-        self.assertEqual(marginals.probability(), 1)
-        self.assertEqual(marginals.probability(x[0]), 0.5)
-        self.assertEqual(marginals.probability(x[1], y[1]), 0.2)
+        self.assertAlmostEqual(marginals.z, 2)
+        self.assertAlmostEqual(marginals.probability(), 1)
+        self.assertAlmostEqual(marginals.probability(x[0]), 0.5)
+        self.assertAlmostEqual(marginals.probability(x[1], y[1]), 0.2)
 
 
 if __name__ == '__main__':

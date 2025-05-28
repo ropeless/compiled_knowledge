@@ -1,16 +1,15 @@
 from __future__ import annotations
 
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Sequence
 
 import numpy as np
 import ctypes as ct
 
 from ck import circuit
-from ck.circuit import CircuitNode, ConstNode, VarNode, OpNode, Circuit
+from ck.circuit import OpNode, VarNode, CircuitNode
 from ck.circuit_compiler.support.circuit_analyser import CircuitAnalysis, analyze_circuit
-from ck.circuit_compiler.support.input_vars import infer_input_vars, InputVars
-from ck.program.raw_program import RawProgram, RawProgramFunction
-from ck.utils.np_extras import DType, NDArrayNumeric, NDArray, DTypeNumeric
+from ck.program.raw_program import RawProgramFunction
+from ck.utils.np_extras import NDArrayNumeric, DTypeNumeric
 
 from cpython.mem cimport PyMem_Malloc, PyMem_Realloc, PyMem_Free
 
@@ -73,10 +72,10 @@ cdef int CONSTS = 2
 cdef int RESULT = 3
 
 
-def _make_instructions_from_analysis(
-        analysis: CircuitAnalysis,
-        dtype: DTypeNumeric,
-) -> Tuple[Instructions, NDArrayNumeric]:
+cdef tuple[Instructions, cnp.ndarray] _make_instructions_from_analysis(
+        object analysis: CircuitAnalysis,
+        object dtype: DTypeNumeric,
+): # -> Tuple[Instructions, NDArrayNumeric]:
     if dtype != np.float64:
         raise RuntimeError(f'only DType {np.float64} currently supported')
 
@@ -90,7 +89,7 @@ def _make_instructions_from_analysis(
         np_consts[i] = node.value
 
     # Where to get input values for each possible node.
-    node_to_element: Dict[int, ElementID] = {}
+    cdef dict[int, ElementID] node_to_element  = {}
     # const nodes
     for node_id, const_idx in node_to_const_idx.items():
         node_to_element[node_id] = ElementID(CONSTS, const_idx)
@@ -109,21 +108,16 @@ def _make_instructions_from_analysis(
     # Build instructions
     instructions: Instructions = Instructions()
 
-    op_node: OpNode
+    cdef object op_node
     for op_node in analysis.op_nodes:
-        dest: ElementID = node_to_element[id(op_node)]
-        args: list[ElementID] = [
-            node_to_element[id(arg)]
-            for arg in op_node.args
-        ]
-        instructions.append(op_node.symbol, args, dest)
+        instructions.append_op(op_node.symbol, op_node, node_to_element)
 
     # Add any copy operations, i.e., result nodes that are not op nodes
     for i, node in enumerate(analysis.result_nodes):
         if not isinstance(node, OpNode):
             dest: ElementID = ElementID(RESULT, i)
-            args: list[ElementID] = [node_to_element[id(node)]]
-            instructions.append(COPY, args, dest)
+            src: ElementID = node_to_element[id(node)]
+            instructions.append_copy(src, dest)
 
     return instructions, np_consts
 
@@ -150,16 +144,39 @@ cdef class Instructions:
         self.allocated = 64
         self.instructions = <Instruction*> PyMem_Malloc(self.allocated * sizeof(Instruction))
 
-    cdef void append(self, int symbol, list[ElementID] args, ElementID dest):
+    cdef void append_copy(
+            self,
+            ElementID src,
+            ElementID dest,
+    ) except*:
+        c_args = <ElementID*> PyMem_Malloc(sizeof(ElementID))
+        if not c_args:
+            raise MemoryError()
+
+        c_args[0] = src
+        self._append(COPY, 1, c_args, dest)
+
+    cdef void append_op(self, int symbol, object op_node: OpNode, dict[int, ElementID] node_to_element) except*:
+        args = op_node.args
         cdef int num_args = len(args)
-        cdef int i
 
         # Create the instruction arguments array
         c_args = <ElementID*> PyMem_Malloc(num_args * sizeof(ElementID))
         if not c_args:
             raise MemoryError()
-        for i in range(num_args):
-            c_args[i] = args[i]
+
+        cdef int i = num_args
+        while i > 0:
+            i -= 1
+            c_args[i] = node_to_element[id(args[i])]
+
+        dest: ElementID = node_to_element[id(op_node)]
+
+        self._append(symbol, num_args, c_args, dest)
+
+
+    cdef void _append(self, int symbol, int num_args, ElementID* c_args, ElementID dest) except *:
+        cdef int i
 
         cdef int num_instructions = self.num_instructions
 

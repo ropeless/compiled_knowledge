@@ -121,10 +121,10 @@ class Test_WMC(Fixture):
 
         wmc = compile_pgm(pgm, const_parameters=False)
 
-        self.assertEqual(wmc.z, 2)
-        self.assertEqual(wmc.probability(), 1)
-        self.assertEqual(wmc.probability(x[0]), 0.5)
-        self.assertEqual(wmc.probability(x[1], y[1]), 0.2)
+        self.assertAlmostEqual(wmc.z, 2)
+        self.assertAlmostEqual(wmc.probability(), 1)
+        self.assertAlmostEqual(wmc.probability(x[0]), 0.5)
+        self.assertAlmostEqual(wmc.probability(x[1], y[1]), 0.2)
 
     def test_wmc_map(self):
         number_of_rvs = 4

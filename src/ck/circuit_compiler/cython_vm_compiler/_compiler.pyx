@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from pickletools import long1
-from typing import Sequence, Dict, List, Tuple, Set, Optional, Iterator
+from typing import Dict, Tuple
 
 import numpy as np
 import ctypes as ct
 
 from ck import circuit
-from ck.circuit import CircuitNode, ConstNode, VarNode, OpNode, ADD, Circuit
+from ck.circuit import CircuitNode, ConstNode, VarNode, OpNode, Circuit
 from ck.circuit_compiler.support.circuit_analyser import CircuitAnalysis, analyze_circuit
 from ck.circuit_compiler.support.input_vars import infer_input_vars, InputVars
 from ck.program.raw_program import RawProgram, RawProgramFunction
@@ -63,15 +62,15 @@ def make_function(
 
 
 # VM instructions
-ADD = circuit.ADD
-MUL = circuit.MUL
-COPY: int = max(ADD, MUL) + 1
+cdef int ADD = circuit.ADD
+cdef int MUL = circuit.MUL
+cdef int COPY = max(ADD, MUL) + 1
 
 # VM arrays
-VARS: int = 0
-TMPS: int = 1
-CONSTS: int = 2
-RESULT: int = 3
+cdef int VARS = 0
+cdef int TMPS = 1
+cdef int CONSTS = 2
+cdef int RESULT = 3
 
 
 def _make_instructions_from_analysis(
@@ -143,32 +142,40 @@ cdef struct Instruction:
 
 cdef class Instructions:
     cdef Instruction* instructions
+    cdef int allocated
     cdef int num_instructions
 
-    def __init__(self):
-        self.instructions = <Instruction*> PyMem_Malloc(0)
+    def __init__(self) -> None:
         self.num_instructions = 0
+        self.allocated = 64
+        self.instructions = <Instruction*> PyMem_Malloc(self.allocated * sizeof(Instruction))
 
-    def append(self, int symbol, list[ElementID] args, ElementID dest) -> None:
+    cdef void append(self, int symbol, list[ElementID] args, ElementID dest):
         cdef int num_args = len(args)
         cdef int i
 
-        c_args = <ElementID*> PyMem_Malloc(
-            num_args * sizeof(ElementID))
+        # Create the instruction arguments array
+        c_args = <ElementID*> PyMem_Malloc(num_args * sizeof(ElementID))
         if not c_args:
             raise MemoryError()
-
         for i in range(num_args):
             c_args[i] = args[i]
 
         cdef int num_instructions = self.num_instructions
-        self.instructions = <Instruction*> PyMem_Realloc(
-            self.instructions,
-            sizeof(Instruction) * (num_instructions + 1)
-        )
-        if not self.instructions:
-            raise MemoryError()
 
+        # Ensure sufficient instruction memory
+        cdef int allocated = self.allocated
+        if num_instructions == allocated:
+            allocated *= 2
+            self.instructions = <Instruction*> PyMem_Realloc(
+                self.instructions,
+                allocated * sizeof(Instruction),
+            )
+            if not self.instructions:
+                raise MemoryError()
+            self.allocated = allocated
+
+        # Add the instruction
         self.instructions[num_instructions] = Instruction(
             symbol,
             num_args,
@@ -177,7 +184,7 @@ cdef class Instructions:
         )
         self.num_instructions = num_instructions + 1
 
-    def __dealloc__(self):
+    def __dealloc__(self) -> None:
         cdef Instruction* instructions = self.instructions
         if instructions:
             for i in range(self.num_instructions):
@@ -194,15 +201,15 @@ cdef void cvm_float64(
     double* consts,
     double* result,
     Instructions instructions,
-):
-    # Core virtual machine.
+) except *:
+    # Core virtual machine (for dtype float64).
 
-    cdef int i, num_args, symbol
+    cdef int i, symbol
     cdef double accumulator
     cdef ElementID* args
-    cdef ElementID elem
+    cdef ElementID  elem
 
-    # index the four arrays by constants VARS, TMPS, CONSTS, and RESULT
+    # Index the four arrays by constants VARS, TMPS, CONSTS, and RESULT
     cdef (double*) arrays[4]
     arrays[VARS] = vars_in
     arrays[TMPS] = tmps
@@ -210,29 +217,32 @@ cdef void cvm_float64(
     arrays[RESULT] = result
 
     cdef Instruction* instruction_ptr = instructions.instructions
-    for _ in range(instructions.num_instructions):
+    cdef int num_instructions = instructions.num_instructions
 
-        symbol = instruction_ptr[0].symbol
-        args = instruction_ptr[0].args
-        num_args = instruction_ptr[0].num_args
+    while num_instructions > 0:
+        num_instructions -= 1
+
+        symbol = instruction_ptr.symbol
+        args = instruction_ptr.args
 
         elem = args[0]
         accumulator = arrays[elem.array][elem.index]
 
         if symbol == ADD:
-            for i in range(1, num_args):
+            i = instruction_ptr.num_args
+            while i > 1:
+                i -= 1
                 elem = args[i]
                 accumulator += arrays[elem.array][elem.index]
         elif symbol == MUL:
-            for i in range(1, num_args):
+            i = instruction_ptr.num_args
+            while i > 1:
+                i -= 1
                 elem = args[i]
                 accumulator *= arrays[elem.array][elem.index]
-        elif symbol == COPY:
-            pass
-        else:
-            raise RuntimeError('symbol not understood: ' + str(symbol))
+        # else symbol == COPY, nothing to do
 
-        elem = instruction_ptr[0].dest
+        elem = instruction_ptr.dest
         arrays[elem.array][elem.index] = accumulator
 
         # Advance the instruction pointer

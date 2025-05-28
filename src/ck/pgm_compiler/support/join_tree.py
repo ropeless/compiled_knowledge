@@ -15,6 +15,11 @@ from ck.utils.np_extras import NDArrayFloat64
 
 @dataclass
 class JoinTree:
+    """
+    This is a recursive data structure representing a join-tree.
+    Each node in the join-tree is represented by a JoinTree object.
+    """
+
     # The PGM that this join tree is for.
     pgm: PGM
 
@@ -40,6 +45,12 @@ class JoinTree:
 
     def max_cluster_weighted_size(self, rv_log_sizes: Sequence[float]) -> float:
         """
+        Calculate the maximum cluster weighted size for this cluster and its children.
+
+        Args:
+            rv_log_sizes: is an array of random variable sizes, such that
+                for a random variable `rv`, `rv_log_sizes[rv.idx] = log2(len(rv))`.
+
         Returns:
             the maximum `log2` over self and all children, recursively.
         """
@@ -82,8 +93,8 @@ JoinTreeAlgorithm = Callable[[PGM], JoinTree]
 
 def _join_tree_algorithm(pgm_to_clusters: ClusterAlgorithm) -> JoinTreeAlgorithm:
     """
-    Helper function for creating a standard JoinTreeAlgorithm from
-    a ClusterAlgorithm.
+    Helper function for creating a standard JoinTreeAlgorithm
+    from a ClusterAlgorithm.
 
     Args:
         pgm_to_clusters: The clusters method to use.
@@ -112,14 +123,17 @@ MIN_TRADITIONAL_WEIGHTED_FILL: JoinTreeAlgorithm = _join_tree_algorithm(min_trad
 
 def clusters_to_join_tree(clusters: Clusters) -> JoinTree:
     """
-    Construct a join tree maker for the given PGM and random variable clusters.
+    Construct a join tree from the given random variable clusters.
 
     A join tree is formed by finding a minimum spanning tree over the clusters
-    where the cost between a pair of cluster is defined according to
-    `separator_cost_counts` and `costing`.
+    where the cost between a pair of clusters is the number of random variables
+    in common (using separator state space size to break ties).
 
     Args:
-        clusters: the clusters that resulted from graph clusters of the given PGM.
+        clusters: the clusters that resulted from graph clusters of a PGM.
+
+    Returns:
+        a JoinTree.
     """
     pgm: PGM = clusters.pgm
     cluster_sets: List[Set[int]] = clusters.clusters
@@ -170,6 +184,19 @@ def _make_spanning_tree_small_root(cost: NDArrayFloat64, clusters: List[Set[int]
     """
     Construct a minimum spanning tree over the clusters, where the root is the cluster with
     the smallest number of random variable.
+
+    Args:
+        cost: is an N x N matrix of costs between N clusters.
+        clusters: is a list of N clusters, each cluster is a set of random variable indices.
+
+    Returns:
+        (spanning_tree, root_index)
+
+        spanning_tree: is a spanning tree represented as a list of nodes, the list is coindexed with
+        the given cost matrix, each node is a list of children, each child being
+        represented as an index into the list of nodes.
+
+        root_index: is the index the chosen root of the spanning tree.
     """
     root_custer_index: int = 0
     root_size: int = len(clusters[root_custer_index])
@@ -185,10 +212,22 @@ def _make_spanning_tree_small_root(cost: NDArrayFloat64, clusters: List[Set[int]
 def _make_spanning_tree_arbitrary_root(cost: NDArrayFloat64) -> Tuple[List[List[int]], int]:
     """
     Construct a minimum spanning tree over the clusters, starting at an arbitrary root.
+
+    Args:
+        cost: is an N x N matrix of costs between N clusters.
+
+    Returns:
+        (spanning_tree, root_index)
+
+        spanning_tree: is a spanning tree represented as a list of nodes, the list is coindexed with
+        the given cost matrix, each node is a list of children, each child being
+        represented as an index into the list of nodes.
+
+        root_index: is the index the chosen root of the spanning tree.
     """
-    root_custer_index: int = 0
-    children: List[List[int]] = _make_spanning_tree_at_root(cost, root_custer_index)
-    return children, root_custer_index
+    root_index: int = 0
+    spanning_tree: List[List[int]] = _make_spanning_tree_at_root(cost, root_index)
+    return spanning_tree, root_index
 
 
 def _make_spanning_tree_at_root(
@@ -202,6 +241,12 @@ def _make_spanning_tree_at_root(
         cost: and nxn matrix where n is the number of clusters and cost[i, j]
             gives the cost between clusters i and j.
         root_custer_index: a nominated root cluster to be the root of the tree.
+
+    Returns:
+        a spanning tree represented as a list of nodes, the list is coindexed with
+        the given cost matrix, each node is a list of children, each child being
+        represented as an index into the list of nodes. The root node is the
+        index `root_custer_index` as passed to this function.
     """
     number_of_clusters: int = cost.shape[0]
 
@@ -257,7 +302,19 @@ def _form_join_tree_r(
         cluster_factors: List[List[Factor]],
 ) -> JoinTree:
     """
-    Recursively build the join tree data structure.
+    Recursively build a JoinTree from the spanning tree `children`.
+    This function merely pull the corresponding component from the
+    arguments to make a JoinTree object, doing this recursively
+    for the children.
+
+    Args:
+        pgm: the source PGM for the join tree.
+        cluster_index: index for the node we are processing (current root). This
+            indexes into `children`, `clusters`, and `cluster_factors`.
+        parent_cluster: set of random variable indices in the parent cluster.
+        children: list of spanning tree nodes, as per `_make_spanning_tree_at_root` result.
+        clusters: list of clusters, each cluster is a set of random variable indices.
+        cluster_factors: assignment of factors to clusters.
     """
     cluster: Set[int] = clusters[cluster_index]
     factors: List[Factor] = cluster_factors[cluster_index]

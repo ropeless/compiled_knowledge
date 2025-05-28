@@ -54,4 +54,4 @@ class NamedCircuitCompiler(Enum):
         return self.value[0]
 
 
-DEFAULT_CIRCUIT_COMPILER: NamedCircuitCompiler = NamedCircuitCompiler.LLVM_VM
+DEFAULT_CIRCUIT_COMPILER: NamedCircuitCompiler = NamedCircuitCompiler.CYTHON_VM

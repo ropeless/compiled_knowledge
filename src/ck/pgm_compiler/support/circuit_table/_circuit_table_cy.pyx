@@ -142,7 +142,7 @@ cpdef object sum_out(object table: CircuitTable, object rv_idxs: Iterable[int]):
 
     for group_instance_tuple, to_add in groups.items():
         node = circuit.optimised_add(to_add)
-        if not node.is_zero():
+        if not node.is_zero:
             rows[group_instance_tuple] = node
 
     return new_table
@@ -159,7 +159,7 @@ cpdef object sum_out_all(object table: CircuitTable):  # -> CircuitTable:
         node = next(iter(table.rows.values()))
     else:
         node: CircuitNode = circuit.optimised_add(table.rows.values())
-        if node.is_zero():
+        if node.is_zero:
             return CircuitTable(circuit, ())
 
     return CircuitTable(circuit, (), [((), node)])
@@ -190,7 +190,7 @@ cpdef object product(x: CircuitTable, y: CircuitTable):  # -> CircuitTable:
 
     # Special case: y == 0 or 1, and has no random variables.
     if len(y.rv_idxs) == 0:
-        if len(y) == 1 and y.top().is_one():
+        if len(y) == 1 and y.top().is_one:
             return x
         elif len(y) == 0:
             return CircuitTable(circuit, x.rv_idxs)
@@ -259,7 +259,7 @@ cpdef object product(x: CircuitTable, y: CircuitTable):  # -> CircuitTable:
             co.append(x_instance[i])
         co_tuple = tuple(co)
 
-        if x_node.is_one():
+        if x_node.is_one:
             # Multiplying by one.
             # Iterate over matching y rows.
             got = y_index.get(co_tuple)
@@ -301,7 +301,7 @@ cdef object _product_no_common_rvs(x: CircuitTable, y: CircuitTable):  # -> Circ
     cdef tuple[int, ...] instance
 
     for x_instance, x_node in x.rows.items():
-        if x_node.is_one():
+        if x_node.is_one:
             for y_instance, y_node in y.rows.items():
                 instance = x_instance + y_instance
                 table.rows[instance] = y_node
@@ -314,12 +314,12 @@ cdef object _product_no_common_rvs(x: CircuitTable, y: CircuitTable):  # -> Circ
 
 
 cdef object _optimised_mul(object circuit: Circuit, object x: CircuitNode, object y: CircuitNode):  # -> CircuitNode
-    if x.is_zero():
+    if x.is_zero:
         return x
-    if y.is_zero():
+    if y.is_zero:
         return y
-    if x.is_one():
+    if x.is_one:
         return y
-    if y.is_one():
+    if y.is_one:
         return x
     return circuit.mul(x, y)

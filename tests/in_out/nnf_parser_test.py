@@ -24,7 +24,7 @@ class TestNnfParser(unittest.TestCase):
         circuit = top_node.circuit
 
         self.assertEqual(circuit.number_of_vars, 0)
-        self.assertTrue(top_node.is_zero())
+        self.assertTrue(top_node.is_zero)
         self.assertEqual(len(slot_map), 0)
 
     def test_parse_simple_add(self):

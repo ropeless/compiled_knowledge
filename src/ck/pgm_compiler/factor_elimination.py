@@ -149,7 +149,7 @@ def join_tree_to_circuit(
         limit_product_tree_search,
     )
     top: CircuitNode = top_table.top()
-    top_table.circuit.remove_unreachable_op_nodes(top)
+    top.circuit.remove_unreachable_op_nodes(top)
 
     return PGMCircuit(
         rvs=tuple(pgm.rvs),
@@ -169,27 +169,37 @@ def _circuit_tables_from_join_tree(
 ) -> CircuitTable:
     """
     This is a basic algorithm for constructing a circuit table from a join tree.
+    Algorithm synopsis:
+    1) Get a CircuitTable for each factor allocated to this join tree node, and
+       for each child of the join tree node (recursive call to _circuit_tables_from_join_tree).
+    2) Form a binary tree of the collected circuit tables.
+    3) Perform table products and sum-outs for each node in the binary tree, which should
+       leave a single circuit table with a single row.
     """
-    # The PGM factors allocated to this join tree node
-    factors: List[CircuitTable] = [
-        factor_tables.get_table(factor)
-        for factor in join_tree.factors
-    ]
-
-    # The children of this join tree node
-    factors.extend(
-        _circuit_tables_from_join_tree(factor_tables, child, limit_product_tree_search)
-        for child in join_tree.children
+    # Get all the factors to combine.
+    factors: List[CircuitTable] = list(
+        chain(
+            (
+                # The PGM factors allocated to this join tree node
+                factor_tables.get_table(factor)
+                for factor in join_tree.factors
+            ),
+            (
+                # The children of this join tree node
+                _circuit_tables_from_join_tree(factor_tables, child, limit_product_tree_search)
+                for child in join_tree.children
+            ),
+        )
     )
 
     # The usual join tree approach just forms the product all the tables in `factors`.
     # The tree width is not affected by the order of products, however some orders
     # lead to smaller numbers of arithmetic operations.
     #
-    # If `options.optimise_products` is true, then heuristics are used
+    # If `limit_product_tree_search > 1`, then heuristics are used
     # reduce the number of arithmetic operations.
 
-    # Deal with the special case: no factors
+    # Deal with the special case: zero factors
     if len(factors) == 0:
         circuit = factor_tables.circuit
         if len(join_tree.separator) == 0:

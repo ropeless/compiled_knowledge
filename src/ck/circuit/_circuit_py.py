@@ -181,7 +181,7 @@ class Circuit:
         * singleton addition is avoided: add(x) = x,
         * empty addition is avoided: add() = 0,
         """
-        to_add = tuple(n for n in self._check_nodes(args) if not n.is_zero())
+        to_add = tuple(n for n in self._check_nodes(args) if not n.is_zero)
         match len(to_add):
             case 0:
                 return self.zero
@@ -200,8 +200,8 @@ class Circuit:
         * singleton multiplication is avoided: mul(x) = x,
         * empty multiplication is avoided: mul() = 1,
         """
-        to_mul = tuple(n for n in self._check_nodes(args) if not n.is_one())
-        if any(n.is_zero() for n in to_mul):
+        to_mul = tuple(n for n in self._check_nodes(args) if not n.is_one)
+        if any(n.is_zero for n in to_mul):
             return self.zero
         match len(to_mul):
             case 0:
@@ -485,12 +485,14 @@ class CircuitNode:
     def __init__(self, circuit: Circuit):
         self.circuit = circuit
 
+    @property
     def is_zero(self) -> bool:
         """
         Does this node represent the constant zero.
         """
         return False
 
+    @property
     def is_one(self) -> bool:
         """
         Does this node represent the constant one.
@@ -522,10 +524,12 @@ class ConstNode(CircuitNode):
     def value(self) -> ConstValue:
         return self._value
 
+    @property
     def is_zero(self) -> bool:
         # noinspection PyProtectedMember
         return self is self.circuit.zero
 
+    @property
     def is_one(self) -> bool:
         # noinspection PyProtectedMember
         return self is self.circuit.one
@@ -569,11 +573,13 @@ class VarNode(CircuitNode):
         else:
             self._const = self.circuit.const(value)
 
+    @property
     def is_zero(self) -> bool:
-        return self._const is not None and self._const.is_zero()
+        return self._const is not None and self._const.is_zero
 
+    @property
     def is_one(self) -> bool:
-        return self._const is not None and self._const.is_one()
+        return self._const is not None and self._const.is_one
 
     def __lt__(self, other) -> bool:
         if isinstance(other, VarNode):
@@ -707,9 +713,11 @@ class _DerivativeHelper:
         to_add: Sequence[CircuitNode] = tuple(
             value
             for value in (self._derivative_prod(prods) for prods in d_node.sum_prod)
-            if not value.is_zero()
+            if not value.is_zero
         )
         # We can release the temporary memory at this DNode now
+        # Warning disabled as we will never use this field again - doing so would be an error.
+        # noinspection PyTypeChecker
         d_node.sum_prod = None
 
         # Construct the addition operation

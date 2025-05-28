@@ -1,5 +1,5 @@
-# from .circuit_py import (
-from .circuit import (
+# from ._circuit_py import (
+from ._circuit_cy import (
     Circuit,
     CircuitNode,
     VarNode,

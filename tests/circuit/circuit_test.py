@@ -29,7 +29,7 @@ class CircuitInterpreter:
         ...
 
     @overload
-    def __call__(self, result: Sequence[CircuitNode]) -> NDArrayNumeric :
+    def __call__(self, result: Sequence[CircuitNode]) -> NDArrayNumeric:
         ...
 
     def __call__(self, result):
@@ -58,7 +58,7 @@ class CircuitFixture(Fixture):
 
         # It does not really make sense to check that constants are co-indexed.
         # for i in range(lhs.number_of_consts):
-        #     self._assertNodesEqual(lhs.get_const_at(i), rhs.get_const_at(i), seen_1, seen_2)
+        #     self._assertNodesEqual(lhs.const_at(i), rhs.const_at(i), seen_1, seen_2)
 
         # This assertion is not trivially true even though lhs.number_of_vars == rhs.number_of_vars.
         # This is because a variable may be set to a constant.
@@ -187,13 +187,16 @@ class TestCircuitBasic(CircuitFixture):
 
         self.assertEqual(3, len(vars_b))
 
-    def test_get_const_zero(self):
+    def test_const_zero(self):
         cct = Circuit()
 
         self.assertEqual(cct.number_of_consts, 2)  # a circuit is created with constants zero and one
 
         const_0 = cct.const(0)
         self.assertTrue(isinstance(const_0, ConstNode))
+        self.assertTrue(const_0.is_zero)
+        self.assertFalse(const_0.is_one)
+        self.assertEqual(const_0.value, 0)
 
         self.assertEqual(cct.number_of_consts, 2)  # a circuit is created with constants zero and one
 
@@ -202,13 +205,16 @@ class TestCircuitBasic(CircuitFixture):
         self.assertEqual(cct.number_of_consts, 2)  # a circuit is created with constants zero and one
         self.assertIs(const_0, const_again)
 
-    def test_get_const_one(self):
+    def test_const_one(self):
         cct = Circuit()
 
         self.assertEqual(cct.number_of_consts, 2)  # a circuit is created with constants zero and one
 
         const_1 = cct.const(1)
         self.assertTrue(isinstance(const_1, ConstNode))
+        self.assertFalse(const_1.is_zero)
+        self.assertTrue(const_1.is_one)
+        self.assertEqual(const_1.value, 1)
 
         self.assertEqual(cct.number_of_consts, 2)
 
@@ -217,7 +223,7 @@ class TestCircuitBasic(CircuitFixture):
         self.assertEqual(cct.number_of_consts, 2)
         self.assertIs(const_1, const_again)
 
-    def test_get_const(self):
+    def test_const(self):
         cct = Circuit()
 
         # a circuit is created with constants zero and one
@@ -226,16 +232,25 @@ class TestCircuitBasic(CircuitFixture):
         const_0 = cct.const(0)
         self.assertEqual(const_0, cct.const(0))
         self.assertEqual(2, cct.number_of_consts)
+        self.assertTrue(const_0.is_zero)
+        self.assertFalse(const_0.is_one)
+        self.assertEqual(const_0.value, 0)
 
         const_1 = cct.const(1)
         self.assertEqual(const_1, cct.const(1))
         self.assertEqual(2, cct.number_of_consts)
+        self.assertFalse(const_1.is_zero)
+        self.assertTrue(const_1.is_one)
+        self.assertEqual(const_1.value, 1)
 
         const_2 = cct.const(2)
         self.assertNotEqual(const_0, const_2)
         self.assertNotEqual(const_1, const_2)
         self.assertEqual(const_2.value, 2.0)
         self.assertEqual(3, cct.number_of_consts)
+        self.assertFalse(const_2.is_zero)
+        self.assertFalse(const_2.is_one)
+        self.assertEqual(const_2.value, 2)
 
         const_2_again = cct.const(2)
         self.assertEqual(const_2, const_2_again)

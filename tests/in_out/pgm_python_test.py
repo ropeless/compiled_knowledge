@@ -5,7 +5,7 @@ from ck.pgm import PGM
 from tests.helpers.pgm_test_cases import PGMTestCases
 from ck.utils.tmp_dir import tmp_dir
 from tests.helpers.unittest_fixture import test_main
-from tests.pgm_test import PGMFixture
+from tests.pgm.pgm_test import PGMFixture
 
 
 class TestPGMPython(PGMTestCases, PGMFixture):

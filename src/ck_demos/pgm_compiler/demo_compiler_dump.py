@@ -9,6 +9,16 @@ from ck.pgm_compiler.support.join_tree import JoinTree, clusters_to_join_tree
 
 
 def main() -> None:
+    """
+    This demo shows the full compilation chain for factor elimination.
+
+    Process:
+        Rain example -> PGM
+        min_degree -> Clusters
+        clusters_to_join_tree -> JoinTree
+        join_tree_to_circuit -> PGMCircuit
+        default circuit compiler -> WMCProgram
+    """
     pgm: PGM = example.Rain()
 
     print(f'PGM {pgm.name!r}')

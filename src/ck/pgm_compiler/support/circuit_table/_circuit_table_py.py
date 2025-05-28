@@ -129,7 +129,7 @@ def sum_out(table: CircuitTable, rv_idxs: Iterable[int]) -> CircuitTable:
     def _result_rows() -> Iterator[Tuple[TableInstance, CircuitNode]]:
         for group, to_add in groups.items():
             _node: CircuitNode = circuit.optimised_add(to_add)
-            if not _node.is_zero():
+            if not _node.is_zero:
                 yield group, _node
 
     return CircuitTable(circuit, remaining_rv_idxs, _result_rows())
@@ -148,7 +148,7 @@ def sum_out_all(table: CircuitTable) -> CircuitTable:
         node = next(iter(table.rows.values()))
     else:
         node: CircuitNode = circuit.optimised_add(table.rows.values())
-        if node.is_zero():
+        if node.is_zero:
             return CircuitTable(circuit, ())
 
     return CircuitTable(circuit, (), [((), node)])
@@ -185,7 +185,7 @@ def product(x: CircuitTable, y: CircuitTable) -> CircuitTable:
 
     # Special case: y == 0 or 1, and has no random variables.
     if y_rv_idxs == ():
-        if len(y) == 1 and y.top().is_one():
+        if len(y) == 1 and y.top().is_one:
             return x
         elif len(y) == 0:
             return CircuitTable(circuit, x_rv_idxs)
@@ -225,7 +225,7 @@ def product(x: CircuitTable, y: CircuitTable) -> CircuitTable:
         # Rows with constant node values of one are optimised out.
         for _x_instance, _x_node in x.rows.items():
             _co = tuple(_x_instance[i] for i in co_from_x_map)
-            if _x_node.is_one():
+            if _x_node.is_one:
                 # Multiplying by one.
                 # Iterate over matching y rows.
                 for _yo, _y_node in y_index.get(_co, ()):
@@ -257,7 +257,7 @@ def _product_no_common_rvs(x: CircuitTable, y: CircuitTable) -> CircuitTable:
 
     def _result_rows() -> Iterator[Tuple[TableInstance, CircuitNode]]:
         for x_instance, x_node in x.rows.items():
-            if x_node.is_one():
+            if x_node.is_one:
                 for y_instance, y_node in y.rows.items():
                     instance = x_instance + y_instance
                     yield instance, y_node

@@ -51,6 +51,8 @@ def compile_pgm(
 
     elimination_order: Sequence[int] = algorithm(pgm).eliminated
 
+    # Eliminate rvs from the factor tables according to the
+    # elimination order.
     cur_tables: List[CircuitTable] = list(factor_tables.tables)
     for rv_idx in elimination_order:
         next_tables: List[CircuitTable] = []

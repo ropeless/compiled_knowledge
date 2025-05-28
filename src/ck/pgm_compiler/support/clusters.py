@@ -180,11 +180,11 @@ def optimal_prefix(clusters: Clusters) -> None:
 
 class Clusters:
     """
-    Holds the state of a connection graph while eliminating variables
-    to identify clusters a PGM graph.
+    A Clusters object holds the state of a connection graph while
+    eliminating variables to construct clusters for a PGM graph.
 
-    The clusters can either be in-progress, `len(Clusters.uneliminated) > 0`,
-    or be completed, `len(Clusters.uneliminated) == 0`.
+    The Clusters object can either be "in-progress" where `len(Clusters.uneliminated) > 0`,
+    or be "completed" where `len(Clusters.uneliminated) == 0`.
 
     See Adnan Darwiche, 2009, Modeling and Reasoning with Bayesian Networks, p164.
     """
@@ -229,6 +229,9 @@ class Clusters:
     @property
     def eliminated(self) -> List[int]:
         """
+        Get the list of eliminated random variables (as random variable
+        indices, in elimination order).
+
         Assumes:
             * The returned list will not be modified by the caller.
 
@@ -240,6 +243,8 @@ class Clusters:
     @property
     def uneliminated(self) -> Set[int]:
         """
+        Get the set of uneliminated random variables (as random variable indices).
+
         Assumes:
             * The returned set will not be modified by the caller.
 
@@ -285,6 +290,8 @@ class Clusters:
 
     def max_cluster_size(self) -> int:
         """
+        Calculate the maximum cluster size over all clusters.
+
         Returns:
             the maximum `len(cluster)` over all clusters.
         """
@@ -292,6 +299,11 @@ class Clusters:
 
     def max_cluster_weighted_size(self, rv_log_sizes: Sequence[float]) -> float:
         """
+        Calculate the maximum cluster weighted size over all clusters.
+
+        Args:
+            rv_log_sizes: is an array of random variable sizes, such that
+                for a random variable `rv`, `rv_log_sizes[rv.idx] = log2(len(rv))`.
         Returns:
             the maximum `sum(rv_log_sizes[rv_idx] for rv_idx in cluster)` over all clusters.
         """

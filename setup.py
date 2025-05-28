@@ -10,8 +10,8 @@ from setuptools import Extension
 from setuptools import setup
 
 CYTHON_MODULES = [
-    'ck.circuit.circuit',
-    'ck.pgm_compiler.support.circuit_table.circuit_table',
+    'ck.circuit._circuit_cy',
+    'ck.pgm_compiler.support.circuit_table._circuit_table_cy',
     'ck.circuit_compiler.cython_vm_compiler._compiler'
 ]
 

@@ -348,7 +348,7 @@ def _make_factor_table(
                 mul_vars[instance[inst_index]]
                 for inst_index, mul_vars in zip(inst_to_mul, mul_rvs_vars)
             )
-            if not node.is_one():
+            if not node.is_one:
                 to_mul += (node,)
             if len(to_mul) == 0:
                 yield instance, circuit.one

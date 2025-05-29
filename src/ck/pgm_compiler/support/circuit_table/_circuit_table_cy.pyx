@@ -1,8 +1,14 @@
 from __future__ import annotations
 
-from typing import Sequence, Tuple, Iterable, Iterator
+from typing import Sequence, Tuple, Iterable
 
-from ck.circuit import CircuitNode, Circuit, OpNode, MUL
+from ck.circuit import MUL, ADD
+
+from ck.circuit._circuit_cy cimport Circuit, CircuitNode
+
+cdef int c_ADD = ADD
+cdef int c_MUL = MUL
+
 
 TableInstance = Tuple[int, ...]
 
@@ -22,14 +28,14 @@ cdef class CircuitTable:
     zero node. These are assumed to be optimised out already.
     """
 
-    cdef public object circuit
+    cdef public Circuit circuit
     cdef public tuple[int, ...] rv_idxs
-    cdef public dict[tuple[int, ...], CircuitNode] rows
+    cdef dict[tuple[int, ...], CircuitNode] rows
 
     def __init__(
             self,
             circuit: Circuit,
-            rv_idxs: Sequence[int, ...],
+            rv_idxs: Sequence[int],
             rows: Iterable[Tuple[TableInstance, CircuitNode]] = (),
     ):
         """
@@ -53,13 +59,19 @@ cdef class CircuitTable:
     def get(self, key, default=None):
         return self.rows.get(key, default)
 
+    def keys(self) -> Iterable[CircuitNode]:
+        return self.rows.keys()
+
+    def values(self) -> Iterable[tuple[int, ...]]:
+        return self.rows.values()
+
     def __getitem__(self, key):
         return self.rows[key]
 
     def __setitem__(self, key, value):
         self.rows[key] = value
 
-    cpdef object top(self):  # -> CircuitNode:
+    cpdef CircuitNode top(self):
         # Get the circuit top value.
         #
         # Raises:
@@ -80,7 +92,7 @@ cdef class CircuitTable:
 #  Circuit Table Operations
 # ==================================================================================
 
-cpdef object sum_out(object table: CircuitTable, object rv_idxs: Iterable[int]):  # -> CircuitTable:
+cpdef CircuitTable sum_out(CircuitTable table, object rv_idxs: Iterable[int]):
     # Return a circuit table that results from summing out
     # the given random variables of this circuit table.
     #
@@ -118,12 +130,12 @@ cpdef object sum_out(object table: CircuitTable, object rv_idxs: Iterable[int]):
     for rv_index in remaining_rv_idxs:
         index_map.append(_find(table.rv_idxs, rv_index))
 
-    cdef dict[tuple[int, ...], list[object]] groups = {}
+    cdef dict[tuple[int, ...], list[CircuitNode]] groups = {}
     cdef object got
     cdef list[int] group_instance
     cdef tuple[int, ...] group_instance_tuple
     cdef int i
-    cdef object node
+    cdef CircuitNode node
     cdef tuple[int, ...] instance
     for instance, node in table.rows.items():
         group_instance = []
@@ -136,19 +148,19 @@ cpdef object sum_out(object table: CircuitTable, object rv_idxs: Iterable[int]):
         else:
             got.append(node)
 
-    cdef object circuit = table.circuit
-    cdef object new_table = CircuitTable(circuit, remaining_rv_idxs)
-    cdef dict[tuple[int, ...], object] rows = new_table.rows
+    cdef Circuit circuit = table.circuit
+    cdef CircuitTable new_table = CircuitTable(circuit, remaining_rv_idxs)
+    cdef dict[tuple[int, ...], CircuitNode] rows = new_table.rows
 
     for group_instance_tuple, to_add in groups.items():
-        node = circuit.optimised_add(to_add)
+        node = circuit.op(c_ADD, tuple(to_add))
         if not node.is_zero:
             rows[group_instance_tuple] = node
 
     return new_table
 
 
-cpdef object sum_out_all(object table: CircuitTable):  # -> CircuitTable:
+cpdef CircuitTable sum_out_all(CircuitTable table):
     # Return a circuit table that results from summing out
     # all random variables of this circuit table.
     circuit: Circuit = table.circuit
@@ -158,14 +170,14 @@ cpdef object sum_out_all(object table: CircuitTable):  # -> CircuitTable:
     elif num_rows == 1:
         node = next(iter(table.rows.values()))
     else:
-        node: CircuitNode = circuit.optimised_add(table.rows.values())
+        node: CircuitNode = circuit.op(c_ADD, tuple(table.rows.values()))
         if node.is_zero:
             return CircuitTable(circuit, ())
 
     return CircuitTable(circuit, (), [((), node)])
 
 
-cpdef object project(object table: CircuitTable, object rv_idxs: Iterable[int]):  # -> CircuitTable:
+cpdef CircuitTable project(CircuitTable table: CircuitTable, object rv_idxs: Iterable[int]):
     # Call `sum_out(table, to_sum_out)`, where
     # `to_sum_out = table.rv_idxs - rv_idxs`.
     cdef set[int] to_sum_out = set(table.rv_idxs)
@@ -173,13 +185,13 @@ cpdef object project(object table: CircuitTable, object rv_idxs: Iterable[int]):
     return sum_out(table, to_sum_out)
 
 
-cpdef object product(x: CircuitTable, y: CircuitTable):  # -> CircuitTable:
+cpdef CircuitTable product(CircuitTable x, CircuitTable y):
     # Return a circuit table that results from the product of the two given tables.
     #
     # If x or y equals `one_table`, then the other table is returned. Otherwise,
     # a new circuit table will be constructed and returned.
     cdef int i
-    cdef object circuit = x.circuit
+    cdef Circuit circuit = x.circuit
     if y.circuit is not circuit:
         raise ValueError('circuit tables must refer to the same circuit')
 
@@ -229,12 +241,12 @@ cpdef object product(x: CircuitTable, y: CircuitTable):  # -> CircuitTable:
     cdef tuple[int, ...] co_tuple
     cdef tuple[int, ...] yo_tuple
 
-    cdef object table = CircuitTable(circuit, x.rv_idxs + yo_rv_idxs)
-    cdef dict[tuple[int, ...], object] rows = table.rows
+    cdef CircuitTable table = CircuitTable(circuit, x.rv_idxs + yo_rv_idxs)
+    cdef dict[tuple[int, ...], CircuitNode] rows = table.rows
 
 
     # Index the y rows by common-only key (y is the smaller of the two tables).
-    cdef dict[tuple[int, ...], list[tuple[tuple[int, ...], object]]] y_index = {}
+    cdef dict[tuple[int, ...], list[tuple[tuple[int, ...], CircuitNode]]] y_index = {}
     for y_instance, y_node in y.rows.items():
         co = []
         yo = []
@@ -271,7 +283,10 @@ cpdef object product(x: CircuitTable, y: CircuitTable):  # -> CircuitTable:
             got = y_index.get(co_tuple)
             if got is not None:
                 for yo_tuple, y_node in got:
-                    rows[x_instance + yo_tuple] = _optimised_mul(circuit, x_node, y_node)
+                    if y_node.is_one:
+                        rows[x_instance + yo_tuple] = x_node
+                    else:
+                        rows[x_instance + yo_tuple] = circuit.op(c_MUL, (x_node, y_node))
 
     return table
 
@@ -285,7 +300,7 @@ cdef int _find(tuple[int, ...] xs, int x):
     raise RuntimeError('not found')
 
 
-cdef object _product_no_common_rvs(x: CircuitTable, y: CircuitTable):  # -> CircuitTable:
+cdef CircuitTable _product_no_common_rvs(CircuitTable x, CircuitTable y):
     # Return the product of x and y, where x and y have no common random variables.
     #
     # This is an optimisation of more general product algorithm as no index needs
@@ -296,8 +311,8 @@ cdef object _product_no_common_rvs(x: CircuitTable, y: CircuitTable):  # -> Circ
     # Assumes:
     #     * There are no common random variables between x and y.
     #     * x and y are for the same circuit.
-    cdef object circuit = x.circuit
-    cdef object table = CircuitTable(circuit, x.rv_idxs + y.rv_idxs)
+    cdef Circuit circuit = x.circuit
+    cdef CircuitTable table = CircuitTable(circuit, x.rv_idxs + y.rv_idxs)
     cdef tuple[int, ...] instance
 
     for x_instance, x_node in x.rows.items():
@@ -308,18 +323,10 @@ cdef object _product_no_common_rvs(x: CircuitTable, y: CircuitTable):  # -> Circ
         else:
             for y_instance, y_node in y.rows.items():
                 instance = x_instance + y_instance
-                table.rows[instance] = _optimised_mul(circuit, x_node, y_node)
+                if y_node.is_one:
+                    table.rows[instance] = x_node
+                else:
+                    table.rows[instance] = circuit.op(c_MUL, (x_node, y_node))
 
     return table
 
-
-cdef object _optimised_mul(object circuit: Circuit, object x: CircuitNode, object y: CircuitNode):  # -> CircuitNode
-    if x.is_zero:
-        return x
-    if y.is_zero:
-        return y
-    if x.is_one:
-        return y
-    if y.is_one:
-        return x
-    return circuit.mul(x, y)

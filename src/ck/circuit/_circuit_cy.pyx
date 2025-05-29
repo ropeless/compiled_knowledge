@@ -4,7 +4,7 @@ For more documentation on this module, refer to the Jupyter notebook docs/6_circ
 from __future__ import annotations
 
 from itertools import chain
-from typing import Dict, Tuple, Optional, Iterable, Sequence, List, overload, Any
+from typing import Dict, Tuple, Optional, Iterable, Sequence, List, overload
 
 # Type for values of ConstNode objects
 ConstValue = float | int | bool
@@ -15,6 +15,8 @@ Args = CircuitNode | ConstValue | Iterable[CircuitNode | ConstValue]
 ADD: int = 0
 MUL: int = 1
 
+cdef int c_ADD = ADD
+cdef int c_MUL = MUL
 
 cdef class Circuit:
     """
@@ -28,13 +30,6 @@ cdef class Circuit:
     All nodes belong to a circuit. All nodes are immutable, with the exception that a
     `VarNode` may be temporarily be set to a constant value.
     """
-
-    cdef public list[VarNode] vars
-    cdef public list[OpNode] ops
-    cdef public object zero
-    cdef public object one
-    cdef dict[Any, ConstNode] _const_map
-    cdef object __derivatives
 
     def __init__(self, zero: ConstValue = 0, one: ConstValue = 1):
         """
@@ -127,72 +122,57 @@ cdef class Circuit:
             self._const_map[value] = node
         return node
 
-    cdef OpNode _op(self, int symbol, tuple[CircuitNode, ...] nodes):
-        cdef OpNode node = OpNode(self, symbol, nodes)
-        self.ops.append(node)
-        return node
-
     def add(self, *nodes: Args) -> OpNode:
         """
         Create and return a new 'addition' node, applied to the given arguments.
         """
         cdef list[CircuitNode] args = self._check_nodes(nodes)
-        return self._op(ADD, tuple(args))
+        return self.op(c_ADD, tuple(args))
 
     def mul(self, *nodes: Args) -> OpNode:
         """
         Create and return a new 'multiplication' node, applied to the given arguments.
         """
         cdef list[CircuitNode] args = self._check_nodes(nodes)
-        return self._op(MUL, tuple(args))
+        return self.op(c_MUL, tuple(args))
 
-    cpdef object optimised_add(self, object nodes: Iterable[CircuitNode]):  # -> CircuitNode:
-        # Optimised circuit node addition.
-        #
-        # Performs the following optimisations:
-        # * addition to zero is avoided: add(x, 0) = x,
-        # * singleton addition is avoided: add(x) = x,
-        # * empty addition is avoided: add() = 0.
+    def optimised_add(self, *args: Args) -> CircuitNode:
+        """
+        Optimised circuit node addition.
 
-        cdef list[CircuitNode] to_add = []
-        cdef CircuitNode n
-        for n in nodes:
-            if n.circuit is not self:
-                raise RuntimeError('node does not belong to this circuit')
-            if not n.is_zero:
-                to_add.append(n)
-        cdef int len_to_add = len(to_add)
-        if len_to_add == 0:
+        Performs the following optimisations:
+        * addition to zero is avoided: add(x, 0) = x,
+        * singleton addition is avoided: add(x) = x,
+        * empty addition is avoided: add() = 0,
+        """
+        cdef tuple[CircuitNode] to_add = tuple(n for n in self._check_nodes(args) if not n.is_zero)
+        cdef size_t num_to_add = len(to_add)
+        if num_to_add == 0:
             return self.zero
-        elif len_to_add == 1:
+        if num_to_add == 1:
             return to_add[0]
-        else:
-            return self._op(ADD, tuple(to_add))
+        return self.op(c_ADD, to_add)
 
-    cpdef object optimised_mul(self, object nodes: Iterable[CircuitNode]):  # -> CircuitNode:
-        # Optimised circuit node multiplication.
-        #
-        # Performs the following optimisations:
-        # * multiplication by zero is avoided: mul(x, 0) = 0,
-        # * multiplication by one is avoided: mul(x, 1) = x,
-        # * singleton multiplication is avoided: mul(x) = x,
-        # * empty multiplication is avoided: mul() = 1.
-        cdef list[CircuitNode] to_mul = []
-        cdef CircuitNode n
-        for n in nodes:
-            if n.circuit is not self:
-                raise RuntimeError('node does not belong to this circuit')
-            if n.is_zero:
-                return self.zero
-            if not n.is_one:
-                to_mul.append(n)
-        cdef int len_to_mul = len(to_mul)
-        if len_to_mul == 0:
+    def optimised_mul(self, *args: Args) -> CircuitNode:
+        """
+        Optimised circuit node multiplication.
+
+        Performs the following optimisations:
+        * multiplication by zero is avoided: mul(x, 0) = 0,
+        * multiplication by one is avoided: mul(x, 1) = x,
+        * singleton multiplication is avoided: mul(x) = x,
+        * empty multiplication is avoided: mul() = 1,
+        """
+        cdef tuple[CircuitNode] to_mul = tuple(n for n in self._check_nodes(args) if not n.is_one)
+        if any(n.is_zero for n in to_mul):
+            return self.zero
+        cdef size_t num_to_mul = len(to_mul)
+
+        if num_to_mul == 0:
             return self.one
-        elif len_to_mul == 1:
+        if num_to_mul == 1:
             return to_mul[0]
-        else:
-            return self._op(MUL, tuple(to_mul))
+        return self.op(c_MUL, to_mul)
 
     def cartesian_product(self, xs: Sequence[CircuitNode], ys: Sequence[CircuitNode]) -> List[CircuitNode]:
         """
@@ -209,7 +189,7 @@ cdef class Circuit:
         xs: List[CircuitNode] = self._check_nodes(xs)
         ys: List[CircuitNode] = self._check_nodes(ys)
         return [
-            self.optimised_mul((x, y))
+            self.optimised_mul(x, y)
             for x in xs
             for y in ys
         ]
@@ -306,24 +286,6 @@ cdef class Circuit:
         nodes = self._check_nodes(nodes)
         self._remove_unreachable_op_nodes(nodes)
 
-    cdef void _remove_unreachable_op_nodes(self, list[CircuitNode] nodes):
-        # Set of object ids for all reachable op nodes
-        cdef set[int] seen = set()
-
-        cdef CircuitNode node
-        for node in nodes:
-            _reachable_op_nodes_seen_r(node, seen)
-
-        if len(seen) < len(self.ops):
-            # Invalidate unreadable op nodes
-            for op_node in self.ops:
-                if id(op_node) not in seen:
-                    op_node.circuit = None
-                    op_node.args = ()
-
-            # Keep only reachable op nodes, in the same order as `self.ops`.
-            self.ops = [op_node for op_node in self.ops if id(op_node) in seen]
-
     def reachable_op_nodes(self, *nodes: Args) -> List[OpNode]:
         """
         Iterate over all op nodes reachable from the given nodes, via op arguments.
@@ -340,17 +302,6 @@ cdef class Circuit:
         """
         nodes = self._check_nodes(nodes)
         return self._reachable_op_nodes(nodes)
-
-    cdef list[OpNode] _reachable_op_nodes(self, list[CircuitNode] nodes):
-        # Set of object ids for all reachable op nodes
-        cdef set[int] seen = set()
-
-        cdef list[OpNode] result = []
-
-        cdef CircuitNode node
-        for node in nodes:
-            _reachable_op_nodes_r(node, seen, result)
-        return result
 
     def dump(
             self,
@@ -415,6 +366,40 @@ cdef class Circuit:
             args_str = ' '.join(node_name[id(arg)] for arg in op.args)
             print(f'{next_prefix}{op_name}: {args_str}')
 
+    cdef OpNode op(self, int symbol, tuple[CircuitNode, ...] nodes):
+        cdef OpNode node = OpNode(self, symbol, nodes)
+        self.ops.append(node)
+        return node
+
+    cdef list[OpNode] _reachable_op_nodes(self, list[CircuitNode] nodes):
+        # Set of object ids for all reachable op nodes
+        cdef set[int] seen = set()
+
+        cdef list[OpNode] result = []
+
+        cdef CircuitNode node
+        for node in nodes:
+            _reachable_op_nodes_r(node, seen, result)
+        return result
+
+    cdef void _remove_unreachable_op_nodes(self, list[CircuitNode] nodes):
+        # Set of object ids for all reachable op nodes
+        cdef set[int] seen = set()
+
+        cdef CircuitNode node
+        for node in nodes:
+            _reachable_op_nodes_seen_r(node, seen)
+
+        if len(seen) < len(self.ops):
+            # Invalidate unreadable op nodes
+            for op_node in self.ops:
+                if id(op_node) not in seen:
+                    op_node.circuit = None
+                    op_node.args = ()
+
+            # Keep only reachable op nodes, in the same order as `self.ops`.
+            self.ops = [op_node for op_node in self.ops if id(op_node) in seen]
+
     cdef list[CircuitNode] _check_nodes(self, object nodes: Iterable[Args]):  # -> Sequence[CircuitNode]:
         # Convert the given circuit nodes to a tuple, flattening nested iterables as needed.
         #
@@ -427,7 +412,7 @@ cdef class Circuit:
         self.__check_nodes(nodes, result)
         return result
 
-    cdef void __check_nodes(self, nodes: Iterable[Args], list[CircuitNode] result):
+    cdef void __check_nodes(self, object nodes: Iterable[Args], list[CircuitNode] result):
         # Convert the given circuit nodes to a tuple, flattening nested iterables as needed.
         #
         # Args:
@@ -455,7 +440,6 @@ cdef class Circuit:
             self.__derivatives = derivatives
         return derivatives
 
-
 cdef class CircuitNode:
     """
     A node in an arithmetic circuit.
@@ -470,9 +454,6 @@ cdef class CircuitNode:
     A var node may be temporarily set to be a constant node, which may
     be useful for optimising a compiled circuit.
     """
-    cdef public Circuit circuit
-    cdef public bint is_zero
-    cdef public bint is_one
 
     def __init__(self, circuit: Circuit, is_zero: bool, is_one: bool):
         self.circuit = circuit
@@ -485,11 +466,10 @@ cdef class CircuitNode:
     def __mul__(self, other: CircuitNode | ConstValue):
         return self.circuit.mul(self, other)
 
-
 cdef class ConstNode(CircuitNode):
-    # A node in a circuit representing a constant value.
-
-    cdef public object value
+    """
+    A node in a circuit representing a constant value.
+    """
 
     def __init__(self, circuit, value: ConstValue, is_zero: bool = False, is_one: bool = False):
         super().__init__(circuit, is_zero, is_one)
@@ -504,13 +484,10 @@ cdef class ConstNode(CircuitNode):
         else:
             return False
 
-
 cdef class VarNode(CircuitNode):
     """
     A node in a circuit representing an input variable.
     """
-    cdef public int idx
-    cdef object _const
 
     def __init__(self, circuit, idx: int):
         super().__init__(circuit, False, False)
@@ -552,13 +529,11 @@ cdef class OpNode(CircuitNode):
     """
     A node in a circuit representing an arithmetic operation.
     """
-    cdef public tuple[object, ...] args
-    cdef public int symbol
 
     def __init__(self, object circuit, symbol: int, tuple[object, ...] args: Tuple[CircuitNode]):
         super().__init__(circuit, False, False)
         self.args = tuple(args)
-        self.symbol = int(symbol)
+        self.symbol = <int> symbol
 
     def __str__(self) -> str:
         return f'{self.op_str()}\\{len(self.args)}'
@@ -567,9 +542,9 @@ cdef class OpNode(CircuitNode):
         """
         Returns the op node operation as a string.
         """
-        if self.symbol == MUL:
+        if self.symbol == c_MUL:
             return 'mul'
-        elif self.symbol == ADD:
+        elif self.symbol == c_ADD:
             return 'add'
         else:
             return '?' + str(self.symbol)
@@ -667,7 +642,7 @@ class _DerivativeHelper:
             elif d is self.one:
                 d_node.derivative_self_mul = node
             else:
-                d_node.derivative_self_mul = self.circuit.optimised_mul((d, node))
+                d_node.derivative_self_mul = self.circuit.optimised_mul(d, node)
 
         return d_node.derivative_self_mul
 
@@ -685,7 +660,7 @@ class _DerivativeHelper:
         d_node.sum_prod = None
 
         # Construct the addition operation
-        d_node.derivative = self.circuit.optimised_add(to_add)
+        d_node.derivative = self.circuit.optimised_add(*to_add)
 
         return d_node.derivative
 
@@ -706,7 +681,7 @@ class _DerivativeHelper:
                 to_mul.append(arg)
 
         # Construct the multiplication operation
-        return self.circuit.optimised_mul(to_mul)
+        return self.circuit.optimised_mul(*to_mul)
 
     def _mk_derivative_r(self, d_node: _DNode) -> None:
         """
@@ -718,11 +693,11 @@ class _DerivativeHelper:
         node: CircuitNode = d_node.node
 
         if isinstance(node, OpNode):
-            if node.symbol == ADD:
+            if node.symbol == c_ADD:
                 for arg in node.args:
                     child_d_node = self._add(arg, d_node, [])
                     self._mk_derivative_r(child_d_node)
-            elif node.symbol == MUL:
+            elif node.symbol == c_MUL:
                 for arg in node.args:
                     prod = [arg2 for arg2 in node.args if arg is not arg2]
                     child_d_node = self._add(arg, d_node, prod)
@@ -779,7 +754,6 @@ cdef void _reachable_op_nodes_r(CircuitNode node, set[int] seen, list[OpNode] re
         for arg in node.args:
             _reachable_op_nodes_r(arg, seen, result)
         result.append(node)
-
 
 cdef void _reachable_op_nodes_seen_r(CircuitNode node, set[int] seen):
     # Recursive helper for `remove_unreachable_op_nodes`. Performs a depth-first search.

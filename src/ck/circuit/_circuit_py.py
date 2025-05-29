@@ -721,7 +721,7 @@ class _DerivativeHelper:
         d_node.sum_prod = None
 
         # Construct the addition operation
-        d_node.derivative = self.circuit.optimised_add(to_add)
+        d_node.derivative = self.circuit.optimised_add(*to_add)
 
         return d_node.derivative
 
@@ -742,7 +742,7 @@ class _DerivativeHelper:
                 to_mul.append(arg)
 
         # Construct the multiplication operation
-        return self.circuit.optimised_mul(to_mul)
+        return self.circuit.optimised_mul(*to_mul)
 
     def _mk_derivative_r(self, d_node: _DNode) -> None:
         """

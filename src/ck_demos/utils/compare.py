@@ -1,3 +1,4 @@
+import gc
 from typing import Sequence
 
 from ck.circuit_compiler import NamedCircuitCompiler
@@ -88,6 +89,7 @@ def compare(
                         print(f'{"":{col_cct_ops}}', end=sep)
                         print(f'{"":{col_pgm_compile_time}}', end=sep)
                     else:
+                        gc.collect()
                         time.start()
                         pgm_cct: PGMCircuit = pgm_compiler(pgm)
                         time.stop()
@@ -97,6 +99,7 @@ def compare(
                         prev_pgm = pgm
                         prev_pgm_compiler = pgm_compiler
 
+                    gc.collect()
                     time.start()
                     # `pgm_cct` will always be set but the IDE can't work that out.
                     # noinspection PyUnboundLocalVariable
@@ -104,11 +107,12 @@ def compare(
                     time.stop()
                     print(f'{time.seconds():{col_cct_compile_time}{comma}.3f}', end=sep)
 
+                    gc.collect()
                     time.start()
                     for _ in range(1000):
                         wmc.compute()
                     time.stop()
-                    print(f'{time.seconds() * 1000:{col_execute_time}{comma}.3f}', end=sep)
+                    print(f'{time.seconds() * 1000:{col_execute_time}{comma}.3f}', end='')
                 except Exception as err:
                     print(repr(err), end='')
                 print()

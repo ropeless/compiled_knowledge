@@ -1,6 +1,7 @@
 # _front matter_
 
 Compiled Knowledge version {version}, built {date}.
+{version_note}
 
 These Jupyter notebooks form a reference for the software known as Compiled Knowledge, abbreviated as CK.
 

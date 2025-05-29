@@ -129,7 +129,7 @@ cdef struct ElementID:
 
 cdef struct Instruction:
     int             symbol  # ADD, MUL, COPY
-    int             num_args
+    Py_ssize_t      num_args
     ElementID*      args
     ElementID       dest
 
@@ -158,14 +158,14 @@ cdef class Instructions:
 
     cdef void append_op(self, int symbol, object op_node: OpNode, dict[int, ElementID] node_to_element) except*:
         args = op_node.args
-        cdef int num_args = len(args)
+        cdef Py_ssize_t num_args = len(args)
 
         # Create the instruction arguments array
         c_args = <ElementID*> PyMem_Malloc(num_args * sizeof(ElementID))
         if not c_args:
             raise MemoryError()
 
-        cdef int i = num_args
+        cdef Py_ssize_t i = num_args
         while i > 0:
             i -= 1
             c_args[i] = node_to_element[id(args[i])]
@@ -175,7 +175,7 @@ cdef class Instructions:
         self._append(symbol, num_args, c_args, dest)
 
 
-    cdef void _append(self, int symbol, int num_args, ElementID* c_args, ElementID dest) except *:
+    cdef void _append(self, int symbol, Py_ssize_t num_args, ElementID* c_args, ElementID dest) except *:
         cdef int i
 
         cdef int num_instructions = self.num_instructions
@@ -221,7 +221,8 @@ cdef void cvm_float64(
 ) except *:
     # Core virtual machine (for dtype float64).
 
-    cdef int i, symbol
+    cdef int symbol
+    cdef Py_ssize_t i
     cdef double accumulator
     cdef ElementID* args
     cdef ElementID  elem

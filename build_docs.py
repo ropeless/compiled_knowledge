@@ -4,7 +4,7 @@ import sys
 import webbrowser
 from datetime import datetime
 from pathlib import Path
-from typing import List
+from typing import List, Dict, Any
 
 import toml
 
@@ -53,19 +53,18 @@ def run_jupyter_book() -> None:
     subprocess.run(cmd, capture_output=False, check=True)
 
 
-def get_project_version(file_path: Path) -> str:
+def load_pyproject(file_path: Path) -> Dict[str, Any]:
     """
-    Extracts the project version from a pyproject.toml file.
+    Loads the pyproject.toml file as a nested dictionary.
 
     Args:
         file_path: Path to the pyproject.toml file.
 
     Returns:
-        str: The project version string
+        the toml dictionary
     """
     with open(file_path, 'r') as f:
-        data = toml.load(f)
-    return data['project']['version']
+        return toml.load(f)
 
 
 def make_front_matter(project_dir: Path, docs_dir: Path) -> None:
@@ -76,13 +75,18 @@ def make_front_matter(project_dir: Path, docs_dir: Path) -> None:
         project_dir: where to find the 'pyproject.toml' file.
         docs_dir: where to find the documents files.
     """
+    pyproject = load_pyproject(project_dir / 'pyproject.toml')
     # These values will be inserted into the template using `str.format`.
-    version: str = get_project_version(project_dir / 'pyproject.toml')
-    date: str = datetime.now().astimezone().strftime('%Y-%m-%d %H:%M:%S (%Z)')
+
+    fields: Dict[str, str] = {
+        'version': pyproject['project']['version'],
+        'version_note': pyproject.get('doc_extra', {}).get('version_note', ''),
+        'date': datetime.now().astimezone().strftime('%Y-%m-%d %H:%M:%S (%Z)'),
+    }
 
     with open(docs_dir / '0_front_matter_template.md', 'r') as f:
         lines = [
-            line.format(version=version, date=date)
+            line.format(**fields)
             for line in f.readlines()
         ]
 

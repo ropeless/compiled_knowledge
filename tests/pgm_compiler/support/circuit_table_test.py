@@ -17,9 +17,7 @@ class TestCircuitTable(Fixture):
         self.assertEqual(table.rv_idxs, ())
         self.assertEqual(len(table), 0)
         self.assertIs(table.top(), circuit.zero)
-        self.assertEqual(list(table.rows.keys()), [])
-        self.assertEqual(list(table.rows.values()), [])
-        self.assertEqual(list(table.rows.items()), [])
+        self.assertEqual(list(table.keys()), [])
 
     def test_one(self):
         circuit = Circuit()
@@ -32,10 +30,7 @@ class TestCircuitTable(Fixture):
         self.assertEqual(table.rv_idxs, ())
         self.assertEqual(len(table), 1)
         self.assertIs(table.top(), var)
-        self.assertEqual(list(table.rows.keys()), [()])
-        self.assertEqual(list(table.rows.values()), [var])
-        self.assertEqual(list(table.rows.items()), [((), var)])
-
+        self.assertEqual(list(table.keys()), [()])
         self.assertIs(table[()], var)
 
     def test_sum_out_all(self):
@@ -56,7 +51,7 @@ class TestCircuitTable(Fixture):
         self.assertIs(new_table.circuit, circuit)
         self.assertEqual(new_table.rv_idxs, ())
         self.assertEqual(len(new_table), 1)
-        self.assertEqual(list(new_table.rows.keys()), [()])
+        self.assertEqual(list(new_table.keys()), [()])
 
         self.assertEqual(_reduce(new_table.top()), 36)
         self.assertEqual(_reduce(new_table[()]), 36)
@@ -125,7 +120,7 @@ class TestCircuitTable(Fixture):
         self.assertIs(new_table.circuit, circuit)
         self.assertEqual(new_table.rv_idxs, ())
         self.assertEqual(len(new_table), 1)
-        self.assertEqual(list(new_table.rows.keys()), [()])
+        self.assertEqual(list(new_table.keys()), [()])
 
         self.assertEqual(_reduce(new_table.top()), 36)
         self.assertEqual(_reduce(new_table[()]), 36)

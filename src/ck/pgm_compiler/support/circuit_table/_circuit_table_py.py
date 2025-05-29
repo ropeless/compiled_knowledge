@@ -40,21 +40,38 @@ class CircuitTable:
             * all row instances conform to the indexed random variables.
             * all row circuit nodes belong to the given circuit.
         """
-        self.circuit: Circuit = circuit
-        self.rv_idxs: Tuple[int, ...] = tuple(rv_idxs)
-        self.rows: Dict[TableInstance, CircuitNode] = dict(rows)
+        self._circuit: Circuit = circuit
+        self._rv_idxs: Tuple[int, ...] = tuple(rv_idxs)
+        self._rows: Dict[TableInstance, CircuitNode] = dict(rows)
+
+    @property
+    def circuit(self) -> Circuit:
+        return self._circuit
+
+    @property
+    def rv_idxs(self) -> Tuple[int, ...]:
+        return self._rv_idxs
 
     def __len__(self) -> int:
-        return len(self.rows)
+        return len(self._rows)
 
     def get(self, key, default=None):
-        return self.rows.get(key, default)
+        return self._rows.get(key, default)
+
+    def keys(self) -> Iterable[TableInstance]:
+        return self._rows.keys()
+
+    def values(self) -> Iterable[CircuitNode]:
+        return self._rows.values()
+
+    def items(self) -> Iterable[Tuple[TableInstance, CircuitNode]]:
+        return self._rows.items()
 
     def __getitem__(self, key):
-        return self.rows[key]
+        return self._rows[key]
 
     def __setitem__(self, key, value):
-        self.rows[key] = value
+        self._rows[key] = value
 
     def top(self) -> CircuitNode:
         """
@@ -66,10 +83,10 @@ class CircuitTable:
         Returns:
             A single circuit node.
         """
-        if len(self.rows) == 0:
-            return self.circuit.zero
-        elif len(self.rows) == 1:
-            return next(iter(self.rows.values()))
+        if len(self._rows) == 0:
+            return self._circuit.zero
+        elif len(self._rows) == 1:
+            return next(iter(self._rows.values()))
         else:
             raise RuntimeError('cannot get top node from a table with more that 1 row')
 
@@ -119,20 +136,34 @@ def sum_out(table: CircuitTable, rv_idxs: Iterable[int]) -> CircuitTable:
         for remaining_rv_index in remaining_rv_idxs
     )
 
+    # This is a one-pass version to sum the groups. The
+    # two-pass version (below) seems to have better performance.
+    #
+    # circuit: Circuit = table.circuit
+    # result = CircuitTable(circuit, remaining_rv_idxs)
+    # result_rows: Dict[TableInstance, CircuitNode] = result._rows
+    # for instance, node in table.items():
+    #     group_instance = tuple(instance[i] for i in index_map)
+    #     prev_sum = result_rows.get(group_instance)
+    #     if prev_sum is None:
+    #         result_rows[group_instance] = node
+    #     else:
+    #         result_rows[group_instance] = circuit.add(prev_sum, node)
+    # return result
+
     groups: MapList[TableInstance, CircuitNode] = MapList()
-    for instance, node in table.rows.items():
+    for instance, node in table.items():
         group_instance = tuple(instance[i] for i in index_map)
         groups.append(group_instance, node)
-
     circuit: Circuit = table.circuit
-
-    def _result_rows() -> Iterator[Tuple[TableInstance, CircuitNode]]:
-        for group, to_add in groups.items():
-            _node: CircuitNode = circuit.optimised_add(to_add)
-            if not _node.is_zero:
-                yield group, _node
-
-    return CircuitTable(circuit, remaining_rv_idxs, _result_rows())
+    return CircuitTable(
+        circuit,
+        remaining_rv_idxs,
+        (
+            (group, circuit.add(to_add))
+            for group, to_add in groups.items()
+        )
+    )
 
 
 def sum_out_all(table: CircuitTable) -> CircuitTable:
@@ -145,9 +176,9 @@ def sum_out_all(table: CircuitTable) -> CircuitTable:
     if num_rows == 0:
         return CircuitTable(circuit, ())
     elif num_rows == 1:
-        node = next(iter(table.rows.values()))
+        node = next(iter(table.values()))
     else:
-        node: CircuitNode = circuit.optimised_add(table.rows.values())
+        node: CircuitNode = circuit.optimised_add(table.values())
         if node.is_zero:
             return CircuitTable(circuit, ())
 
@@ -168,7 +199,7 @@ def product(x: CircuitTable, y: CircuitTable) -> CircuitTable:
     """
     Return a circuit table that results from the product of the two given tables.
 
-    If x or y equals `one_table`, then the other table is returned. Otherwise,
+    If x or y have a single row with value 1, then the other table is returned. Otherwise,
     a new circuit table will be constructed and returned.
     """
     circuit: Circuit = x.circuit
@@ -193,18 +224,18 @@ def product(x: CircuitTable, y: CircuitTable) -> CircuitTable:
     # Set operations on rv indexes. After these operations:
     # * co_rv_idxs is the set of rv indexes common (co) to x and y,
     # * yo_rv_idxs is the set of rv indexes in y only (yo), and not in x.
-    yo_rv_idxs: Set[int] = set(y_rv_idxs)
-    co_rv_idxs: Set[int] = set(x_rv_idxs)
-    co_rv_idxs.intersection_update(yo_rv_idxs)
-    yo_rv_idxs.difference_update(co_rv_idxs)
+    yo_rv_idxs_set: Set[int] = set(y_rv_idxs)
+    co_rv_idxs_set: Set[int] = set(x_rv_idxs)
+    co_rv_idxs_set.intersection_update(yo_rv_idxs_set)
+    yo_rv_idxs_set.difference_update(co_rv_idxs_set)
 
-    if len(co_rv_idxs) == 0:
+    if len(co_rv_idxs_set) == 0:
         # Special case: no common random variables.
         return _product_no_common_rvs(x, y)
 
     # Convert random variable index sets to sequences
-    yo_rv_idxs: Tuple[int, ...] = tuple(yo_rv_idxs)  # y only random variables
-    co_rv_idxs: Tuple[int, ...] = tuple(co_rv_idxs)  # common random variables
+    yo_rv_idxs: Tuple[int, ...] = tuple(yo_rv_idxs_set)  # y only random variables
+    co_rv_idxs: Tuple[int, ...] = tuple(co_rv_idxs_set)  # common random variables
 
     # Cache mappings from result Instance to index into source Instance (x or y).
     # This will be used in indexing and product loops to pull our needed values
@@ -215,7 +246,7 @@ def product(x: CircuitTable, y: CircuitTable) -> CircuitTable:
 
     # Index the y rows by common-only key (y is the smaller of the two tables).
     y_index: MapList[TableInstance, Tuple[TableInstance, CircuitNode]] = MapList()
-    for y_instance, y_node in y.rows.items():
+    for y_instance, y_node in y.items():
         co = tuple(y_instance[i] for i in co_from_y_map)
         yo = tuple(y_instance[i] for i in yo_from_y_map)
         y_index.append(co, (yo, y_node))
@@ -223,7 +254,7 @@ def product(x: CircuitTable, y: CircuitTable) -> CircuitTable:
     def _result_rows() -> Iterator[Tuple[TableInstance, CircuitNode]]:
         # Iterate over x rows, yielding (instance, value).
         # Rows with constant node values of one are optimised out.
-        for _x_instance, _x_node in x.rows.items():
+        for _x_instance, _x_node in x.items():
             _co = tuple(_x_instance[i] for i in co_from_x_map)
             if _x_node.is_one:
                 # Multiplying by one.
@@ -233,7 +264,10 @@ def product(x: CircuitTable, y: CircuitTable) -> CircuitTable:
             else:
                 # Iterate over matching y rows.
                 for _yo, _y_node in y_index.get(_co, ()):
-                    yield _x_instance + _yo, circuit.optimised_mul((_x_node, _y_node))
+                    if _y_node.is_one:
+                        yield _x_instance + _yo, _x_node
+                    else:
+                        yield _x_instance + _yo, circuit.mul(_x_node, _y_node)
 
     return CircuitTable(circuit, x_rv_idxs + yo_rv_idxs, _result_rows())
 
@@ -256,14 +290,15 @@ def _product_no_common_rvs(x: CircuitTable, y: CircuitTable) -> CircuitTable:
     result_rv_idxs: Tuple[int, ...] = x.rv_idxs + y.rv_idxs
 
     def _result_rows() -> Iterator[Tuple[TableInstance, CircuitNode]]:
-        for x_instance, x_node in x.rows.items():
+        for x_instance, x_node in x.items():
             if x_node.is_one:
-                for y_instance, y_node in y.rows.items():
-                    instance = x_instance + y_instance
-                    yield instance, y_node
+                for y_instance, y_node in y.items():
+                    yield x_instance + y_instance, y_node
             else:
-                for y_instance, y_node in y.rows.items():
-                    instance = x_instance + y_instance
-                    yield instance, circuit.optimised_mul((x_node, y_node))
+                for y_instance, y_node in y.items():
+                    if y_node.is_one:
+                        yield x_instance + y_instance, y_node
+                    else:
+                        yield x_instance + y_instance, circuit.mul(x_node, y_node)
 
     return CircuitTable(circuit, result_rv_idxs, _result_rows())

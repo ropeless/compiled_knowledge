@@ -1,10 +1,9 @@
-from more_itertools import take
-
 from ck.circuit_compiler.llvm_compiler import compile_circuit
 from ck.pgm import PGM
 from ck.pgm_compiler import factor_elimination
 from ck.pgm_circuit import PGMCircuit
 from ck.program.program_buffer import ProgramBuffer
+from ck.utils.iter_extras import take
 from tests.helpers.pgm_test_cases import PGMTestCases
 
 from tests.helpers.unittest_fixture import Fixture, test_main
@@ -23,7 +22,7 @@ class TestFactorElimination(Fixture, PGMTestCases):
         prog = ProgramBuffer(compile_circuit(pgm_cct.circuit_top))
         slot_map = pgm_cct.slot_map
 
-        for instance_indicators in take(LIMIT_INSTANCES_CHECK, pgm.instances_as_indicators()):
+        for instance_indicators in take(pgm.instances_as_indicators(), LIMIT_INSTANCES_CHECK):
             prog[:] = 0
             for ind in instance_indicators:
                 prog[slot_map[ind]] = 1

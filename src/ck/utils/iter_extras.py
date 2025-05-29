@@ -2,7 +2,7 @@
 A module with extra iteration functions.
 """
 from functools import reduce as _reduce
-from itertools import combinations, chain
+from itertools import combinations, chain, islice
 from operator import mul as _mul
 from typing import Iterable, Tuple, Sequence, TypeVar
 
@@ -154,3 +154,10 @@ def first(items: Iterable[_T]) -> _T:
     Return the first element of the iterable.
     """
     return next(iter(items))
+
+
+def take(iterable: Iterable[_T], n: int) -> Iterable[_T]:
+    """
+    Take the first n elements of the iterable.
+    """
+    return islice(iterable, n)

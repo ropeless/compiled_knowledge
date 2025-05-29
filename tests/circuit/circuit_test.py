@@ -362,6 +362,49 @@ class TestCircuitBasic(CircuitFixture):
         self.assertEqual(v[1], args[1])
 
 
+class TestCircuitOptimisedOps(CircuitFixture):
+
+    def assertArgs(self, node: CircuitNode, args: Sequence[CircuitNode]) -> None:
+        args = tuple(args)
+        if isinstance(node, OpNode):
+            self.assertEqual(node.args, args)
+        else:
+            self.fail(f'expected OpNode but got {type(node)}')
+
+    def test_optimised_add(self):
+        cct = Circuit()
+        zero = cct.zero
+        one = cct.one
+        v0, v1 = cct.new_vars(2)
+
+        self.assertIs(cct.optimised_add(), zero)
+        self.assertIs(cct.optimised_add(v0), v0)
+        self.assertIs(cct.optimised_add(v0, zero), v0)
+        self.assertIs(cct.optimised_add(zero, v0, zero), v0)
+
+        self.assertArgs(cct.optimised_add(v0, v1), (v0, v1))
+        self.assertArgs(cct.optimised_add(v0, one), (v0, one))
+        self.assertArgs(cct.optimised_add(v0, zero, v1), (v0, v1))
+        self.assertArgs(cct.optimised_add(zero, v0, one, zero), (v0, one))
+
+    def test_optimised_mul(self):
+        cct = Circuit()
+        zero = cct.zero
+        one = cct.one
+        v0, v1 = cct.new_vars(2)
+
+        self.assertIs(cct.optimised_mul(), one)
+        self.assertIs(cct.optimised_mul(v0), v0)
+        self.assertIs(cct.optimised_mul(v0, zero), zero)
+        self.assertIs(cct.optimised_mul(zero, v0, zero), zero)
+        self.assertIs(cct.optimised_mul(v0, one), v0)
+        self.assertIs(cct.optimised_mul(one, v0, one), v0)
+        self.assertIs(cct.optimised_mul(v0, zero, v1), zero)
+
+        self.assertArgs(cct.optimised_mul(v0, v1), (v0, v1))
+        self.assertArgs(cct.optimised_mul(one, v0, one, v1), (v0, v1))
+
+
 class TestCircuitSimpleCalculations(CircuitFixture):
 
     def test_add(self):

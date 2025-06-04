@@ -1,12 +1,13 @@
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Tuple
 
 import numpy as np
 
 from ck.circuit import CircuitNode, Circuit, VarNode
 from ck.circuit_compiler.support.input_vars import InferVars, InputVars, infer_input_vars
-from ck.program.raw_program import RawProgram
+from ck.program.raw_program import RawProgram, RawProgramFunction
 from ck.utils.np_extras import DTypeNumeric
-from ._compiler import make_function as _make_function
+from . import _compiler
+from ..support.circuit_analyser import CircuitAnalysis, analyze_circuit
 
 
 def compile_circuit(
@@ -31,7 +32,11 @@ def compile_circuit(
     Raises:
         ValueError: if the circuit is unknown, but it is needed.
         ValueError: if not all nodes are from the same circuit.
+        ValueError: if the given dtype is not supported.
     """
+    if dtype not in _compiler.DTYPE_TO_CVM_TYPE.keys():
+        raise ValueError(f'dtype not supported: {dtype!r}')
+
     in_vars: Sequence[VarNode] = infer_input_vars(circuit, result, input_vars)
     return CythonRawProgram(in_vars, result, dtype)
 
@@ -70,7 +75,7 @@ class CythonRawProgram(RawProgram):
             'number_of_vars': self.number_of_vars,
             'number_of_tmps': self.number_of_tmps,
             'number_of_results': self.number_of_results,
-            'var_indices':self.var_indices,
+            'var_indices': self.var_indices,
             #
             'in_vars': self.in_vars,
             'result': self.result,
@@ -94,3 +99,23 @@ class CythonRawProgram(RawProgram):
             result_nodes=self.result,
             dtype=self.dtype,
         )
+
+
+def _make_function(
+        var_nodes: Sequence[VarNode],
+        result_nodes: Sequence[CircuitNode],
+        dtype: DTypeNumeric,
+) -> Tuple[RawProgramFunction, int]:
+    """
+    Make a RawProgram function that interprets the circuit.
+
+    Args:
+        var_nodes: The chosen input variable nodes of the circuit.
+        result_nodes: The chosen output result nodes of the circuit.
+        dtype: a numpy data type that must be a key in the dictionary, DTYPE_TO_CVM_TYPE.
+
+    Returns:
+        (function, number_of_tmps)
+    """
+    analysis: CircuitAnalysis = analyze_circuit(var_nodes, result_nodes)
+    return _compiler.make_function(analysis, dtype)

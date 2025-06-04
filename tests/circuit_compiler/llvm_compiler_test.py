@@ -61,6 +61,57 @@ class TestLLVMCompilerFloat64Funcs(Fixture, CompilerCases):
         )
 
 
+class TestLLVMCompilerFloat32Tmps(Fixture, CompilerCases):
+
+    def compile_circuit(
+            self,
+            *result: CircuitNode,
+            input_vars: InputVars = InferVars.ALL,
+            circuit: Optional[Circuit] = None,
+    ) -> RawProgram:
+        return llvm_compiler.compile_circuit(
+            *result,
+            input_vars=input_vars,
+            circuit=circuit,
+            flavour=Flavour.TMPS,
+            data_type=DataType.FLOAT_32,
+        )
+
+
+class TestLLVMCompilerFloat32Stack(Fixture, CompilerCases):
+
+    def compile_circuit(
+            self,
+            *result: CircuitNode,
+            input_vars: InputVars = InferVars.ALL,
+            circuit: Optional[Circuit] = None,
+    ) -> RawProgram:
+        return llvm_compiler.compile_circuit(
+            *result,
+            input_vars=input_vars,
+            circuit=circuit,
+            flavour=Flavour.STACK,
+            data_type=DataType.FLOAT_32,
+        )
+
+
+class TestLLVMCompilerFloat32Funcs(Fixture, CompilerCases):
+
+    def compile_circuit(
+            self,
+            *result: CircuitNode,
+            input_vars: InputVars = InferVars.ALL,
+            circuit: Optional[Circuit] = None,
+    ) -> RawProgram:
+        return llvm_compiler.compile_circuit(
+            *result,
+            input_vars=input_vars,
+            circuit=circuit,
+            flavour=Flavour.FUNCS,
+            data_type=DataType.FLOAT_32,
+        )
+
+
 class TestLLVMCompilerDType(Fixture):
 
     def assert_constant(self, value, data_type: DataType) -> None:

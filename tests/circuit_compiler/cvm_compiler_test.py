@@ -26,6 +26,21 @@ class TestCVMCompilerFloat64(Fixture, CompilerCases):
         )
 
 
+class TestCVMCompilerFloat32(Fixture, CompilerCases):
+
+    def compile_circuit(
+            self,
+            *result: CircuitNode,
+            input_vars: InputVars = InferVars.ALL,
+            circuit: Optional[Circuit] = None,
+    ) -> RawProgram:
+        return cython_vm_compiler.compile_circuit(
+            *result,
+            input_vars=input_vars,
+            circuit=circuit,
+            dtype=np.float32,
+        )
+
 
 if __name__ == '__main__':
     test_main()

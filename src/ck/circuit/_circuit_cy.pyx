@@ -4,7 +4,7 @@ For more documentation on this module, refer to the Jupyter notebook docs/6_circ
 from __future__ import annotations
 
 from itertools import chain
-from typing import Dict, Tuple, Optional, Iterable, Sequence, List, overload
+from typing import Dict, Optional, Iterable, Sequence, List, overload
 
 # Type for values of ConstNode objects
 ConstValue = float | int | bool
@@ -41,13 +41,11 @@ cdef class Circuit:
         """
         self.vars: List[VarNode] = []
         self.ops: List[OpNode] = []
-        self._const_map: Dict[ConstValue, ConstNode] = {}
-        self.__derivatives: Optional[_DerivativeHelper] = None  # cache for partial derivatives calculations.
         self.zero: ConstNode = ConstNode(self, zero, is_zero=True)
         self.one: ConstNode = ConstNode(self, one, is_one=True)
 
-        self._const_map[zero] = self.zero
-        self._const_map[one] = self.one
+        self._const_map: Dict[ConstValue, ConstNode] = {zero: self.zero, one: self.one}
+        self.__derivatives: Optional[_DerivativeHelper] = None  # cache for partial derivatives calculations.
 
     @property
     def number_of_vars(self) -> int:
@@ -145,7 +143,7 @@ cdef class Circuit:
         * singleton addition is avoided: add(x) = x,
         * empty addition is avoided: add() = 0,
         """
-        cdef tuple[CircuitNode] to_add = tuple(n for n in self._check_nodes(args) if not n.is_zero)
+        cdef tuple[CircuitNode, ...] to_add = tuple(n for n in self._check_nodes(args) if not n.is_zero)
         cdef size_t num_to_add = len(to_add)
         if num_to_add == 0:
             return self.zero
@@ -163,10 +161,10 @@ cdef class Circuit:
         * singleton multiplication is avoided: mul(x) = x,
         * empty multiplication is avoided: mul() = 1,
         """
-        cdef tuple[CircuitNode] to_mul = tuple(n for n in self._check_nodes(args) if not n.is_one)
+        cdef tuple[CircuitNode, ...] to_mul = tuple(n for n in self._check_nodes(args) if not n.is_one)
         if any(n.is_zero for n in to_mul):
             return self.zero
-        cdef size_t num_to_mul = len(to_mul)
+        cdef Py_ssize_t num_to_mul = len(to_mul)
 
         if num_to_mul == 0:
             return self.one
@@ -186,12 +184,12 @@ cdef class Circuit:
             a list of 'mul' nodes, one for each combination of xs and ys. The results are in the order
             given by `[mul(x, y) for x in xs for y in ys]`.
         """
-        xs: List[CircuitNode] = self._check_nodes(xs)
-        ys: List[CircuitNode] = self._check_nodes(ys)
+        cdef list[CircuitNode] xs_list = self._check_nodes(xs)
+        cdef list[CircuitNode] ys_list = self._check_nodes(ys)
         return [
             self.optimised_mul(x, y)
-            for x in xs
-            for y in ys
+            for x in xs_list
+            for y in ys_list
         ]
 
     @overload
@@ -242,10 +240,10 @@ cdef class Circuit:
             If  `args` is a single CircuitNode, then a single CircuitNode will be returned, otherwise
             a list of CircuitNode is returned.
         """
-        single_result: bool = isinstance(args, CircuitNode)
+        cdef bint single_result = isinstance(args, CircuitNode)
 
-        args: List[CircuitNode] = self._check_nodes([args])
-        if len(args) == 0:
+        cdef list[CircuitNode] args_list = self._check_nodes([args])
+        if len(args_list) == 0:
             # Trivial case
             return []
 
@@ -254,12 +252,12 @@ cdef class Circuit:
         if self_multiply:
             result = [
                 derivatives.derivative_self_mul(arg)
-                for arg in args
+                for arg in args_list
             ]
         else:
             result = [
                 derivatives.derivative(arg)
-                for arg in args
+                for arg in args_list
             ]
 
         if single_result:
@@ -283,8 +281,8 @@ cdef class Circuit:
         Args:
             *nodes: may be either a node or a list of nodes.
         """
-        nodes = self._check_nodes(nodes)
-        self._remove_unreachable_op_nodes(nodes)
+        cdef list[CircuitNode] node_list = self._check_nodes(nodes)
+        self._remove_unreachable_op_nodes(node_list)
 
     def reachable_op_nodes(self, *nodes: Args) -> List[OpNode]:
         """
@@ -300,8 +298,8 @@ cdef class Circuit:
             Returned nodes are not repeated.
             The result is ordered such that if result[i] is referenced by result[j] then i < j.
         """
-        nodes = self._check_nodes(nodes)
-        return self._reachable_op_nodes(nodes)
+        cdef list[CircuitNode] node_list = self._check_nodes(nodes)
+        return self.find_reachable_op_nodes(node_list)
 
     def dump(
             self,
@@ -371,7 +369,7 @@ cdef class Circuit:
         self.ops.append(node)
         return node
 
-    cdef list[OpNode] _reachable_op_nodes(self, list[CircuitNode] nodes):
+    cdef list[OpNode] find_reachable_op_nodes(self, list[CircuitNode] nodes):
         # Set of object ids for all reachable op nodes
         cdef set[int] seen = set()
 
@@ -379,7 +377,7 @@ cdef class Circuit:
 
         cdef CircuitNode node
         for node in nodes:
-            _reachable_op_nodes_r(node, seen, result)
+            find_reachable_op_nodes_r(node, seen, result)
         return result
 
     cdef void _remove_unreachable_op_nodes(self, list[CircuitNode] nodes):
@@ -388,7 +386,7 @@ cdef class Circuit:
 
         cdef CircuitNode node
         for node in nodes:
-            _reachable_op_nodes_seen_r(node, seen)
+            find_reachable_op_nodes_seen_r(node, seen)
 
         if len(seen) < len(self.ops):
             # Invalidate unreadable op nodes
@@ -401,7 +399,7 @@ cdef class Circuit:
             self.ops = [op_node for op_node in self.ops if id(op_node) in seen]
 
     cdef list[CircuitNode] _check_nodes(self, object nodes: Iterable[Args]):  # -> Sequence[CircuitNode]:
-        # Convert the given circuit nodes to a tuple, flattening nested iterables as needed.
+        # Convert the given circuit nodes to a list, flattening nested iterables as needed.
         #
         # Args:
         #     nodes: some circuit nodes of constant values.
@@ -413,7 +411,7 @@ cdef class Circuit:
         return result
 
     cdef void __check_nodes(self, object nodes: Iterable[Args], list[CircuitNode] result):
-        # Convert the given circuit nodes to a tuple, flattening nested iterables as needed.
+        # Convert the given circuit nodes to a list, flattening nested iterables as needed.
         #
         # Args:
         #     nodes: some circuit nodes of constant values.
@@ -530,7 +528,7 @@ cdef class OpNode(CircuitNode):
     A node in a circuit representing an arithmetic operation.
     """
 
-    def __init__(self, object circuit, symbol: int, tuple[object, ...] args: Tuple[CircuitNode]):
+    def __init__(self, Circuit circuit, int symbol, tuple[CircuitNode, ...] args):
         super().__init__(circuit, False, False)
         self.args = tuple(args)
         self.symbol = <int> symbol
@@ -554,11 +552,11 @@ cdef class _DNode:
     A data structure supporting derivative calculations.
     A DNode holds all information needed to calculate the partial derivative at `node`.
     """
-    cdef public object node
-    cdef public object derivative
-    cdef public object derivative_self_mul
-    cdef public list sum_prod
-    cdef public bint processed
+    cdef CircuitNode node
+    cdef object derivative
+    cdef object derivative_self_mul
+    cdef list[_DNodeProduct] sum_prod
+    cdef bint processed
 
     def __init__(
             self,
@@ -590,8 +588,8 @@ cdef class _DNodeProduct:
 
     The represents a product of `parent` and `prod`.
     """
-    cdef public object parent
-    cdef public list prod
+    cdef _DNode parent
+    cdef list[CircuitNode] prod
 
     def __init__(self, parent: _DNode, prod: List[CircuitNode]):
         self.parent = parent
@@ -604,33 +602,40 @@ cdef class _DNodeProduct:
         return 'DNodeProduct(' + str(self.parent) + ', ' + str(self.prod) + ')'
 
 
-class _DerivativeHelper:
+cdef class _DerivativeHelper:
     """
     A data structure to support efficient calculation of partial derivatives
     with respect to some function node `f`.
     """
 
+    cdef CircuitNode f
+    cdef CircuitNode zero
+    cdef CircuitNode one
+    cdef Circuit circuit
+    cdef dict[int, _DNode] d_nodes
+
     def __init__(self, f: CircuitNode):
         """
         Prepare to calculate partial derivatives with respect to `f`.
         """
-        self.f: CircuitNode = f
-        self.circuit: Circuit = f.circuit
-        self.d_nodes: Dict[int, _DNode] = {}  # map id(CircuitNode) to its DNode
+        self.f = f
+        self.circuit = f.circuit
+        self.d_nodes = {}  # map id(CircuitNode) to its DNode
         self.zero = self.circuit.zero
         self.one = self.circuit.one
-        top_d_node: _DNode = _DNode(f, self.one)
+
+        cdef _DNode top_d_node = _DNode(f, self.one)
         self.d_nodes[id(f)] = top_d_node
         self._mk_derivative_r(top_d_node)
 
-    def derivative(self, node: CircuitNode) -> CircuitNode:
+    cdef CircuitNode derivative(self, CircuitNode node):
         d_node: Optional[_DNode] = self.d_nodes.get(id(node))
         if d_node is None:
             return self.zero
         else:
             return self._derivative(d_node)
 
-    def derivative_self_mul(self, node: CircuitNode) -> CircuitNode:
+    cdef CircuitNode derivative_self_mul(self, CircuitNode node):
         d_node: Optional[_DNode] = self.d_nodes.get(id(node))
         if d_node is None:
             return self.zero
@@ -646,7 +651,7 @@ class _DerivativeHelper:
 
         return d_node.derivative_self_mul
 
-    def _derivative(self, d_node: _DNode) -> CircuitNode:
+    cdef CircuitNode _derivative(self, _DNode d_node):
         if d_node.derivative is not None:
             return d_node.derivative
 
@@ -664,10 +669,9 @@ class _DerivativeHelper:
 
         return d_node.derivative
 
-    def _derivative_prod(self, prods: _DNodeProduct) -> CircuitNode:
-        """
-        Support `_derivative` by constructing the derivative product for the given _DNodeProduct.
-        """
+    cdef CircuitNode _derivative_prod(self, _DNodeProduct prods):
+        # Support `_derivative` by constructing the derivative product for the given _DNodeProduct.
+
         # Get the derivative of the parent node.
         parent: CircuitNode = self._derivative(prods.parent)
 
@@ -683,10 +687,9 @@ class _DerivativeHelper:
         # Construct the multiplication operation
         return self.circuit.optimised_mul(*to_mul)
 
-    def _mk_derivative_r(self, d_node: _DNode) -> None:
-        """
-        Construct a DNode for each argument of the given DNode.
-        """
+    cdef void _mk_derivative_r(self, _DNode d_node):
+        # Construct a DNode for each argument of the given DNode.
+
         if d_node.processed:
             return
         d_node.processed = True
@@ -703,37 +706,35 @@ class _DerivativeHelper:
                     child_d_node = self._add(arg, d_node, prod)
                     self._mk_derivative_r(child_d_node)
 
-    def _add(self, node: CircuitNode, parent: _DNode, prod: List[CircuitNode]) -> _DNode:
-        """
-        Support for `_mk_derivative_r`.
+    cdef _DNode _add(self, CircuitNode node, _DNode parent,  list[CircuitNode] prod):
+        # Support for `_mk_derivative_r`.
+        #
+        # Add a _DNodeProduct(parent, negate, prod) to the DNode for the given circuit node.
+        #
+        # If the DNode for `node` does not yet exist, one will be created.
+        #
+        # The given circuit node may have multiple parents (i.e., a shared sub-expression). Therefore,
+        # this method may be called multiple times for a given node. Each time a new _DNodeProduct will be added.
+        #
+        # Args:
+        #     node: the CircuitNode that the returned DNode is for.
+        #     parent: the DNode of the parent node, i.e., `node` is an argument to the parent node.
+        #     prod: other circuit nodes that need to be multiplied with the parent derivative when
+        #         constructing a derivative for `node`.
+        #
+        # Returns:
+        #     the DNode for `node`.
 
-        Add a _DNodeProduct(parent, negate, prod) to the DNode for the given circuit node.
-
-        If the DNode for `node` does not yet exist, one will be created.
-
-        The given circuit node may have multiple parents (i.e., a shared sub-expression). Therefore,
-        this method may be called multiple times for a given node. Each time a new _DNodeProduct will be added.
-
-        Args:
-            node: the CircuitNode that the returned DNode is for.
-            parent: the DNode of the parent node, i.e., `node` is an argument to the parent node.
-            prod: other circuit nodes that need to be multiplied with the parent derivative when
-                constructing a derivative for `node`.
-
-        Returns:
-            the DNode for `node`.
-        """
         child_d_node: _DNode = self._get(node)
         child_d_node.sum_prod.append(_DNodeProduct(parent, prod))
         return child_d_node
 
-    def _get(self, node: CircuitNode) -> _DNode:
-        """
-        Helper for derivatives.
+    cdef _DNode _get(self, CircuitNode node):
+        # Helper for derivatives.
+        #
+        # Get the DNode for the given circuit node.
+        # If no DNode exist for it yet, then one will be constructed.
 
-        Get the DNode for the given circuit node.
-        If no DNode exist for it yet, then one will be constructed.
-        """
         node_id: int = id(node)
         d_node: Optional[_DNode] = self.d_nodes.get(node_id)
         if d_node is None:
@@ -742,7 +743,7 @@ class _DerivativeHelper:
         return d_node
 
 
-cdef void _reachable_op_nodes_r(CircuitNode node, set[int] seen, list[OpNode] result):
+cdef void find_reachable_op_nodes_r(CircuitNode node, set[int] seen, list[OpNode] result):
     # Recursive helper for `reachable_op_nodes`. Performs a depth-first search.
     #
     # Args:
@@ -752,10 +753,10 @@ cdef void _reachable_op_nodes_r(CircuitNode node, set[int] seen, list[OpNode] re
     if isinstance(node, OpNode) and id(node) not in seen:
         seen.add(id(node))
         for arg in node.args:
-            _reachable_op_nodes_r(arg, seen, result)
+            find_reachable_op_nodes_r(arg, seen, result)
         result.append(node)
 
-cdef void _reachable_op_nodes_seen_r(CircuitNode node, set[int] seen):
+cdef void find_reachable_op_nodes_seen_r(CircuitNode node, set[int] seen):
     # Recursive helper for `remove_unreachable_op_nodes`. Performs a depth-first search.
     #
     # Args:
@@ -764,4 +765,4 @@ cdef void _reachable_op_nodes_seen_r(CircuitNode node, set[int] seen):
     if isinstance(node, OpNode) and id(node) not in seen:
         seen.add(id(node))
         for arg in node.args:
-            _reachable_op_nodes_seen_r(arg, seen)
+            find_reachable_op_nodes_seen_r(arg, seen)

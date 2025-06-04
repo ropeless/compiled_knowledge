@@ -6,6 +6,11 @@ from ck.pgm_circuit.wmc_program import WMCProgram
 
 
 def main() -> None:
+
+    if not ace.ace_available():
+        print("ACE is not available")
+        exit(1)
+
     pgm: PGM = example.Rain()
 
     # `ace.compile_pgm` will look for an Ace installation in

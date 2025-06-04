@@ -7,8 +7,13 @@ from ck.circuit import OpNode, VarNode, CircuitNode, ConstNode
 
 @dataclass
 class CircuitAnalysis:
-    var_nodes: Sequence[VarNode] # input var nodes, in VarNode idx order
-    result_nodes: Sequence[CircuitNode] # result nodes
+    """
+    A data structure representing the analysis of a function defined by
+    a circuit which chosen input variables and output result nodes.
+    """
+
+    var_nodes: Sequence[VarNode]  # specified input var nodes
+    result_nodes: Sequence[CircuitNode]  # specified result nodes
     op_nodes: Sequence[OpNode]  # in-use op nodes, in computation order
     const_nodes: Sequence[ConstNode]  # in_use const nodes, in arbitrary order
     op_to_result: Dict[int, int]  # op nodes in the result, op_node = result[idx]: id(op_node) -> idx
@@ -22,6 +27,13 @@ def analyze_circuit(
     """
     Analyzes a circuit as a function from var_nodes to result_nodes,
     returning a CircuitAnalysis object.
+
+    Args:
+        var_nodes: The chosen input variable nodes of the circuit.
+        result_nodes: The chosen output result nodes of the circuit.
+
+    Returns:
+        A CircuitAnalysis object.
     """
     # What op nodes are in use
     op_nodes: List[OpNode] = (

@@ -19,19 +19,19 @@ COMMA_NUMBERS: bool = True
 PRINT_HEADER: bool = True
 
 PGMS: Sequence[PGM] = [
-    example.Rain(),
-    example.Cancer(),
-    example.Earthquake(),
-    example.Asia(),
-    example.Survey(),
-    example.Sachs(),
-    example.Child(),
-    example.Alarm(),
-
+    # example.Rain(),
+    # example.Cancer(),
+    # example.Earthquake(),
+    # example.Asia(),
+    # example.Survey(),
+    # example.Sachs(),
+    # example.Child(),
+    # example.Alarm(),
+    #
     # example.Hailfinder(),
     # example.Insurance(),
     # example.Pathfinder(),
-    # example.Mildew(),
+    example.Mildew(),
 ]
 
 PGM_COMPILERS: Sequence[NamedPGMCompiler] = [

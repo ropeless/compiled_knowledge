@@ -22,7 +22,7 @@ CYTHON_MODULES: List[str] = [MODULE_CIRCUIT, MODULE_CIRCUIT_TABLE, MODULE_CIRCUI
 
 COMPILER_ARGS: List[str] = []
 if sys.platform == 'darwin':
-    COMPILER_ARGS += ['-Wno-unreachable-code', '-Ofast', '-march=native']
+    COMPILER_ARGS += ['-Wno-unreachable-code', '-Wno-unused-function', '-O3']
 if sys.platform == 'win32':
     COMPILER_ARGS += ['/O2']
 

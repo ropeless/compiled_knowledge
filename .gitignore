@@ -5,10 +5,16 @@ private/
 cython_debug/
 **/_circuit_cy.c
 **/_circuit_table_cy.c
+**/_circuit_analyser_cy.c
 **/_compiler.c
 **/_circuit_cy.cpp
 **/_circuit_table_cy.cpp
+**/_circuit_analyser_cy.cpp
 **/_compiler.cpp
+**/_circuit_cy.*.so
+**/_circuit_table_cy.*.so
+**/_circuit_analyser_cy.*.so
+**/_compiler.*.so
 
 
 # Byte-compiled / optimized / DLL files

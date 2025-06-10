@@ -14,11 +14,14 @@ organization and usage of Compiled Knowledge, these notebooks also covers some i
 This documentation is available online at
 [compiled-knowledge.readthedocs.io](https://compiled-knowledge.readthedocs.io/).
 
+The Python package is available on PyPI, see
+[pypi.org/project/compiled-knowledge](https://pypi.org/project/compiled-knowledge/).
+
 The primary repository for the project is
 [github.com/ropeless/compiled_knowledge](https://github.com/ropeless/compiled_knowledge).
 
-The Python package is available on PyPI, see
-[pypi.org/project/compiled-knowledge](https://pypi.org/project/compiled-knowledge/).
+Software and documentation issues may be raised using
+[github.com/ropeless/compiled_knowledge/issues](https://github.com/ropeless/compiled_knowledge/issues).
 
 For more information email
 [info@compiledknowledge.org](mailto:info@compiledknowledge.org).

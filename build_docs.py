@@ -84,13 +84,13 @@ def make_front_matter(project_dir: Path, docs_dir: Path) -> None:
         'date': datetime.now().astimezone().strftime('%Y-%m-%d %H:%M:%S (%Z)'),
     }
 
-    with open(docs_dir / '0_front_matter_template.md', 'r') as f:
+    with open(docs_dir / '00_front_matter_template.md', 'r') as f:
         lines = [
             line.format(**fields)
             for line in f.readlines()
         ]
 
-    with open(docs_dir / '0_front_matter.md', 'w') as f:
+    with open(docs_dir / '00_front_matter.md', 'w') as f:
         f.writelines(lines)
 
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import partial
-from typing import Sequence, Optional, Tuple, List, Dict, Set
+from typing import Sequence, Optional, Tuple, List, Dict, Set, assert_never
 
 from ck.circuit import CircuitNode, Circuit, VarNode, OpNode, ADD, MUL
 from ck.circuit_compiler import llvm_vm_compiler, CircuitCompiler
@@ -207,7 +207,7 @@ class MPEProgram(ProgramWithSlotmap):
                             self._trace_var(child, states)
                             return
                 # No child value equaled the value for node! We should never get here
-                assert False, 'not reached'
+                assert_never('not reached')
             elif node.symbol == MUL:
                 # Recurse though each child node
                 for child in node.args:

@@ -12,9 +12,11 @@ omit =
 [report]
 exclude_lines =
     def __repr__
+    def dump\(
     if __name__ == .__main__.:
     main\(\)
     raise NotImplementedError
     class .*\bProtocol\):
     @(abc\.)?abstractmethod
+    assert_never\(
     \.\.\.

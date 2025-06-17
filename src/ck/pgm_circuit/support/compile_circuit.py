@@ -2,7 +2,6 @@ from typing import Optional, Sequence
 
 from ck.circuit import CircuitNode, TmpConst, Circuit
 from ck.circuit_compiler import CircuitCompiler
-from ck.circuit_compiler.llvm_compiler import DataType, DEFAULT_TYPE_INFO, compile_circuit
 from ck.circuit_compiler import DEFAULT_CIRCUIT_COMPILER
 from ck.pgm_circuit import PGMCircuit
 from ck.program import RawProgram
@@ -48,7 +47,7 @@ def compile_param_derivatives(
         pgm_circuit: PGMCircuit,
         self_multiply: bool = False,
         params_value: Optional[float | int] = 1,
-        data_type: DataType = DEFAULT_TYPE_INFO,
+        compiler: CircuitCompiler = DEFAULT_CIRCUIT_COMPILER,
 ) -> RawProgram:
     """
     Compile the circuit to a program for computing the partial derivatives of the parameters.
@@ -56,14 +55,12 @@ def compile_param_derivatives(
 
     Typically, this will grow the circuit by the addition of circuit nodes to compute the derivatives.
 
-    This uses the LLVM circuit compiler.
-
     Args:
         pgm_circuit: The circuit (and PGM) that will be compiled to a program.
         self_multiply: if true then each partial derivative df/dx will be multiplied by x.
         params_value: if not None, then circuit vars representing parameters will be temporarily
             set to this value for compiling the program. Default is 1.
-        data_type: What data type to use for arithmetic calculations. Either a DataType member or TypeInfo.
+        compiler: function from circuit nodes to raw program.
     """
     top: CircuitNode = pgm_circuit.circuit_top
     circuit: Circuit = top.circuit
@@ -76,8 +73,8 @@ def compile_param_derivatives(
     if params_value is not None:
         with TmpConst(circuit) as tmp:
             tmp.set_const(param_vars, params_value)
-            raw_program: RawProgram = compile_circuit(*derivatives, circuit=circuit, data_type=data_type)
+            raw_program: RawProgram = compiler(*derivatives, circuit=circuit)
     else:
-        raw_program: RawProgram = compile_circuit(*derivatives, circuit=circuit, data_type=data_type)
+        raw_program: RawProgram = compiler(*derivatives, circuit=circuit)
 
     return raw_program

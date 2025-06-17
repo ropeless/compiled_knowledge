@@ -23,14 +23,13 @@ class RawProgram:
 
     A `RawProgram` is a `Callable` with the signature:
 
-
     Fields:
         function: is a function of three ctypes arrays, returning nothing.
         dtype: the numpy data type of  the array values.
         number_of_vars: the number of input values (first function argument).
         number_of_tmps: the number of working memory values (second function argument).
         number_of_results: the number of result values (third function argument).
-        var_indices:  maps the index of inputs (from 0 to self.number_of_vars - 1) to the index
+        var_indices: maps the index of inputs (from 0 to self.number_of_vars - 1) to the index
             of the corresponding circuit var.
     """
 

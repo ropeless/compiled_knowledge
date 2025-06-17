@@ -16,7 +16,6 @@ class NamedPGMCompiler(Enum):
     Wrapping in a tuple is needed otherwise Python erases the type of the member, which can cause problems.
     Each member itself is callable, confirming to the PGMCompiler protocol, delegating to the compiler function.
     """
-    # @formatter:off
 
     VE_MIN_DEGREE = _get_compiler_algorithm(variable_elimination, 'MIN_DEGREE')
     VE_MIN_DEGREE_THEN_FILL = _get_compiler_algorithm(variable_elimination, 'MIN_DEGREE_THEN_FILL')
@@ -44,8 +43,6 @@ class NamedPGMCompiler(Enum):
     RC_MIN_TRADITIONAL_WEIGHTED_FILL = _get_compiler_algorithm(recursive_conditioning, 'MIN_TRADITIONAL_WEIGHTED_FILL')
 
     ACE = _get_compiler(ace)
-
-    # @formatter:on
 
     def __call__(self, pgm: PGM, const_parameters: bool = True) -> PGMCircuit:
         """

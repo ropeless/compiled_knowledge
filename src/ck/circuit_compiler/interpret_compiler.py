@@ -139,6 +139,7 @@ def _make_instructions(
     for node_id, const_idx in node_to_const_idx.items():
         node_to_element[node_id] = _ElementID(_CONSTS, const_idx)
     # var nodes
+    var_node: VarNode
     for i, var_node in enumerate(analysis.var_nodes):
         if var_node.is_const():
             node_to_element[id(var_node)] = node_to_element[id(var_node.const)]

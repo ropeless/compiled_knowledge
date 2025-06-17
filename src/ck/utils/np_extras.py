@@ -29,17 +29,17 @@ NDArrayNumeric = NDArray[DTypeNumeric]
 
 
 # Constants for maximum number of states.
-_MAX_STATES_8: int = 2 ** 8 - 1
-_MAX_STATES_16: int = 2 ** 16 - 1
-_MAX_STATES_32: int = 2 ** 32 - 1
-_MAX_STATES_64: int = 2 ** 64 - 1
+_MAX_STATES_8: int = 2 ** 8
+_MAX_STATES_16: int = 2 ** 16
+_MAX_STATES_32: int = 2 ** 32
+_MAX_STATES_64: int = 2 ** 64
 
 
 def dtype_for_number_of_states(number_of_states: int) -> DTypeStates:
     """
     Infer the numpy dtype required to store any state index of the given PGM.
     """
-    # Infer the needed size of
+    # Infer the needed dtype required to hold a number of states
     if number_of_states <= _MAX_STATES_8:
         return np.uint8
     if number_of_states <= _MAX_STATES_16:

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Sequence, Optional, Tuple, Dict, Protocol
+from typing import Sequence, Optional, Tuple, Dict, Protocol, assert_never
 
 import llvmlite.binding as llvm
 import llvmlite.ir as ir
@@ -238,7 +238,7 @@ class _FunctionBuilderTmps(_FunctionBuilder):
         if idx is not None:
             return builder.load(builder.gep(self.out_args, [ir.Constant(self.llvm_idx_type, idx)]))
 
-        assert False, 'not reached'
+        assert_never('not reached')
 
     def store_calculation(self, value: ir.Value, op_node: OpNode) -> None:
         """
@@ -262,7 +262,7 @@ class _FunctionBuilderTmps(_FunctionBuilder):
             builder.store(value, ptr)
             return
 
-        assert False, 'not reached'
+        assert_never('not reached')
 
     def store_result(self, value: ir.Value, idx: int) -> None:
         """
@@ -359,7 +359,7 @@ class _FunctionBuilderStack(_FunctionBuilder):
         if idx is not None:
             return builder.load(builder.gep(self.out_args, [ir.Constant(self.llvm_idx_type, idx)]))
 
-        assert False, 'not reached'
+        assert_never('not reached')
 
     def store_calculation(self, value: ir.Value, op_node: OpNode) -> None:
         """

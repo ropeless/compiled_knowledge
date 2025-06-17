@@ -295,7 +295,7 @@ class Clusters:
         Returns:
             the maximum `len(cluster)` over all clusters.
         """
-        return max(len(cluster) for cluster in self.clusters)
+        return max((len(cluster) for cluster in self.clusters), default=0)
 
     def max_cluster_weighted_size(self, rv_log_sizes: Sequence[float]) -> float:
         """
@@ -303,13 +303,17 @@ class Clusters:
 
         Args:
             rv_log_sizes: is an array of random variable sizes, such that
-                for a random variable `rv`, `rv_log_sizes[rv.idx] = log2(len(rv))`.
+                for a random variable `rv`, `rv_log_sizes[rv.idx] = log2(len(rv))`,
+                e.g., `self.pgm.rv_log_sizes`.
         Returns:
             the maximum `sum(rv_log_sizes[rv_idx] for rv_idx in cluster)` over all clusters.
         """
         return max(
-            sum(rv_log_sizes[rv_idx] for rv_idx in cluster)
-            for cluster in self.clusters
+            (
+                sum(rv_log_sizes[rv_idx] for rv_idx in cluster)
+                for cluster in self.clusters
+            ),
+            default=0
         )
 
     def eliminate(self, rv_index: int) -> None:

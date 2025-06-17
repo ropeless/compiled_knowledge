@@ -2935,7 +2935,7 @@ class CPTPotentialFunction(PotentialFunction):
             return True
         else:
             # The requested tolerance is tighter than ensured.
-            # Need to use the default method
+            # Need to use the default method.
             return super().is_cpt(tolerance)
 
     @property

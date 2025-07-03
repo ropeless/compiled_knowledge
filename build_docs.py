@@ -30,7 +30,7 @@ def main() -> None:
     html_index = build_dir / 'html/index.html'
 
     if INSTANTIATE_TEMPLATES:
-        make_front_matter(project_dir, docs_dir)
+        instantiate_templates(project_dir, docs_dir)
 
     if FORCE_REBUILD and build_dir.exists():
         shutil.rmtree(build_dir)
@@ -67,9 +67,9 @@ def load_pyproject(file_path: Path) -> Dict[str, Any]:
         return toml.load(f)
 
 
-def make_front_matter(project_dir: Path, docs_dir: Path) -> None:
+def instantiate_templates(project_dir: Path, docs_dir: Path) -> None:
     """
-    Update the "front matter" document form its template.
+    Instantiate Markdown documents from found templates.
 
     Args:
         project_dir: where to find the 'pyproject.toml' file.
@@ -84,14 +84,18 @@ def make_front_matter(project_dir: Path, docs_dir: Path) -> None:
         'date': datetime.now().astimezone().strftime('%Y-%m-%d %H:%M:%S (%Z)'),
     }
 
-    with open(docs_dir / '00_front_matter_template.md', 'r') as f:
-        lines = [
-            line.format(**fields)
-            for line in f.readlines()
-        ]
+    for template_file in docs_dir.glob('*_template.md'):
+        dest_name = template_file.name[:-len('_template.md')] + '.md'
+        dest_file: Path = docs_dir / dest_name
 
-    with open(docs_dir / '00_front_matter.md', 'w') as f:
-        f.writelines(lines)
+        with open(template_file, 'r') as f:
+            lines = [
+                line.format(**fields)
+                for line in f.readlines()
+            ]
+
+        with open(dest_file, 'w') as f:
+            f.writelines(lines)
 
 
 def execute_notebook(notebook_path: Path) -> None:

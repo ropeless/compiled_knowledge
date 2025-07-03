@@ -413,7 +413,7 @@ class Circuit:
             f'{prefix}op nodes: {self.number_of_op_nodes} '
             f'(arcs: {self.number_of_arcs}, ops: {self.number_of_operations})'
         )
-        for op in reversed(self.ops):
+        for op in self.ops:
             op_name = node_name[id(op)]
             args_str = ' '.join(node_name[id(arg)] for arg in op.args)
             print(f'{next_prefix}{op_name}: {args_str}')

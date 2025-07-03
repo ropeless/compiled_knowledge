@@ -1,12 +1,12 @@
 from __future__ import annotations
 
+import ctypes as ct
 from dataclasses import dataclass
 from typing import Sequence, Optional, Tuple, List, Dict
 
 import llvmlite.binding as llvm
 import llvmlite.ir as ir
 import numpy as np
-import ctypes as ct
 
 from .support.circuit_analyser import CircuitAnalysis, analyze_circuit
 from .support.input_vars import InputVars, InferVars, infer_input_vars
@@ -126,6 +126,12 @@ class LLVMRawProgramWithArrays(LLVMRawProgram):
     instructions: np.ndarray
     consts: np.ndarray
 
+    def dump(self, *, prefix: str = '', indent: str = '  ', show_instructions: bool = True) -> None:
+        super().dump(prefix=prefix, indent=indent)
+        print(f'{prefix}LLVM byte code size = {len(self.instructions)}')
+        if show_instructions:
+            self.dump_llvm_program(prefix=prefix, indent=indent)
+
     def __post_init__(self):
         self._set_globals(self.instructions, _SET_INSTRUCTIONS_FUNCTION_NAME)
         self._set_globals(self.consts, _SET_CONSTS_FUNCTION_NAME)
@@ -200,7 +206,7 @@ def _make_llvm_program(
         consts_global.global_constant = True
         consts_global.initializer = ir.Constant(consts_array_type, const_values)
         data_idx_0 = ir.Constant(data_idx_type, 0)
-        consts: ir.Value = builder.gep(consts_global, [data_idx_0,  data_idx_0])
+        consts: ir.Value = builder.gep(consts_global, [data_idx_0, data_idx_0])
 
         # Put bytecode into the LLVM module
         instructions_array_type = ir.ArrayType(byte_type, len(byte_code))
@@ -218,7 +224,7 @@ def _make_llvm_program(
 
         instructions_ptr_type = byte_type.as_pointer()
         instructions_global = ir.GlobalVariable(module, instructions_ptr_type, name='instructions')
-        instructions_global.initializer =ir.Constant(instructions_ptr_type, None)
+        instructions_global.initializer = ir.Constant(instructions_ptr_type, None)
         instructions: ir.Value = builder.load(instructions_global)
 
     interp = _InterpBuilder(builder, type_info, inst_idx_type, data_idx_bytes, num_args_bytes, consts, instructions)

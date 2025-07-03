@@ -7,8 +7,8 @@ from unittest import TextTestRunner
 
 from tests.helpers.unittest_fixture import make_suit
 
-TEST_VERBOSITY = 2
-NUMBER_OF_RUNS = 1
+TEST_VERBOSITY: int = 2
+NUMBER_OF_RUNS: int = 1
 
 
 def test_modules() -> List[str]:

@@ -38,7 +38,7 @@ DTYPE_TO_CVM_TYPE: Dict[DTypeNumeric, str] = {
 }
 
 
-def make_function(analysis: CircuitAnalysis, dtype: DTypeNumeric) -> Tuple[RawProgramFunction, int]:
+def make_function(analysis: CircuitAnalysis, dtype: DTypeNumeric) -> Tuple[RawProgramFunction, int, int]:
     """
     Make a RawProgram function that interprets the circuit.
 
@@ -47,7 +47,7 @@ def make_function(analysis: CircuitAnalysis, dtype: DTypeNumeric) -> Tuple[RawPr
         dtype: a numpy data type that must be a key in the dictionary, DTYPE_TO_CVM_TYPE.
 
     Returns:
-        (function, number_of_tmps)
+        (function, number_of_tmps, number_of_instructions)
     """
 
     cdef Instructions instructions
@@ -128,7 +128,7 @@ def make_function(analysis: CircuitAnalysis, dtype: DTypeNumeric) -> Tuple[RawPr
     else:
         raise ValueError(f'cvm_type_name unexpected: {cvm_type_name!r}')
 
-    return function, len(analysis.op_to_tmp)
+    return function, len(analysis.op_to_tmp), len(analysis.op_nodes)
 
 # VM instructions
 cdef int ADD = circuit.ADD

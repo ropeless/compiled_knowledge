@@ -1,17 +1,17 @@
 from __future__ import annotations
 
+import ctypes as ct
 from dataclasses import dataclass
 from typing import Sequence, Optional, Dict, List, Tuple, Callable
 
 import numpy as np
-import ctypes as ct
 
+from .support.circuit_analyser import CircuitAnalysis, analyze_circuit
+from .support.input_vars import InputVars, InferVars, infer_input_vars
 from ..circuit import Circuit, CircuitNode, VarNode, OpNode, ADD, MUL
 from ..program.raw_program import RawProgram, RawProgramFunction
 from ..utils.iter_extras import multiply, first
 from ..utils.np_extras import NDArrayNumeric, DTypeNumeric
-from .support.circuit_analyser import CircuitAnalysis, analyze_circuit
-from .support.input_vars import InputVars, InferVars, infer_input_vars
 
 # index to a value array
 _VARS = 0
@@ -85,6 +85,15 @@ class InterpreterRawProgram(RawProgram):
             var_indices=tuple(var.idx for var in in_vars),
         )
 
+    def dump(self, *, prefix: str = '', indent: str = '  ', show_instructions: bool = True) -> None:
+        super().dump(prefix=prefix, indent=indent)
+        print(f'{prefix}number of instructions = {len(self.instructions)}')
+        if show_instructions:
+            print(f'{prefix}instructions:')
+            next_prefix: str = prefix + indent
+            for instruction in self.instructions:
+                print(f'{next_prefix}{instruction.to_str(self.var_indices, self.np_consts)}')
+
     def __getstate__(self):
         """
         Support for pickle.
@@ -123,7 +132,6 @@ def _make_instructions(
         analysis: CircuitAnalysis,
         dtype: DTypeNumeric,
 ) -> Tuple[Sequence[_Instruction], NDArrayNumeric]:
-
     # Store const values in a numpy array
     node_to_const_idx: Dict[int, int] = {
         id(node): i
@@ -216,9 +224,32 @@ class _ElementID:
     array: int  # VARS, TMPS, CONSTS, RESULT
     index: int  # index into the array
 
+    def to_str(self, var_indices: Sequence[int], consts: NDArrayNumeric) -> str:
+        if self.array == _VARS:
+            return f'var[{var_indices[self.index]}]'
+        elif self.array == _TMPS:
+            return f'tmp[{self.index}]'
+        elif self.array == _CONSTS:
+            return str(consts.item(self.index))
+        elif self.array == _RESULT:
+            return f'result[{self.index}]'
+        else:
+            return f'?[{self.index}]'
+
 
 @dataclass
 class _Instruction:
     operation: Callable
     args: Sequence[_ElementID]
     dest: _ElementID
+
+    def to_str(self, var_indices: Sequence[int], consts: NDArrayNumeric) -> str:
+        symbol: str
+        if self.operation is multiply:
+            symbol = 'mul'
+        elif self.operation == sum:
+            symbol = 'sum'
+        else:
+            symbol = '<?>'
+        args: str = ' '.join(elem.to_str(var_indices, consts) for elem in self.args)
+        return f'{self.dest.to_str(var_indices, consts)} = {symbol} {args}'

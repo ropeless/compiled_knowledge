@@ -1,7 +1,7 @@
 import ctypes as ct
 from dataclasses import dataclass
 from enum import Enum
-from typing import Callable, Tuple, Optional
+from typing import Callable, Tuple, Optional, List
 
 import llvmlite.binding as llvm
 import llvmlite.ir as ir
@@ -171,6 +171,23 @@ class LLVMRawProgram(RawProgram):
             'llvm_program': self.llvm_program,
             'opt': self.opt,
         }
+
+    def dump(self, *, prefix: str = '', indent: str = '  ', show_instructions: bool = True) -> None:
+        super().dump(prefix=prefix, indent=indent)
+        print(f'{prefix}optimisation level = {self.opt}')
+        if show_instructions:
+            self.dump_llvm_program(prefix=prefix, indent=indent)
+
+    def dump_llvm_program(self, *, prefix: str = '', indent: str = '  ') -> None:
+        if self.llvm_program is None:
+            print(f'{prefix}LLVM program: unavailable')
+        else:
+            llvm_program: List[str] = self.llvm_program.split('\n')
+            print(f'{prefix}LLVM program size = {len(llvm_program)}')
+            print(f'{prefix}LLVM program:')
+            next_prefix: str = prefix + indent
+            for line in llvm_program:
+                print(f'{next_prefix}{line}')
 
     def __setstate__(self, state):
         """

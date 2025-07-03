@@ -48,14 +48,15 @@ class CythonRawProgram(RawProgram):
             result: Sequence[CircuitNode],
             dtype: DTypeNumeric,
     ):
-        self.in_vars = in_vars
-        self.result = result
-
-        function, number_of_tmps = _make_function(
+        function, number_of_tmps, number_of_instructions = _make_function(
             var_nodes=in_vars,
             result_nodes=result,
             dtype=dtype,
         )
+
+        self.in_vars = in_vars
+        self.result = result
+        self.number_of_instructions = number_of_instructions
 
         super().__init__(
             function=function,
@@ -65,6 +66,10 @@ class CythonRawProgram(RawProgram):
             number_of_results=len(result),
             var_indices=tuple(var.idx for var in in_vars),
         )
+
+    def dump(self, *, prefix: str = '', indent: str = '  ') -> None:
+        super().dump(prefix=prefix, indent=indent)
+        print(f'{prefix}number of instructions = {self.number_of_instructions}')
 
     def __getstate__(self):
         """
@@ -94,7 +99,7 @@ class CythonRawProgram(RawProgram):
         self.in_vars = state['in_vars']
         self.result = state['result']
 
-        self.function, _ = _make_function(
+        self.function, _, self.number_of_instructions = _make_function(
             var_nodes=self.in_vars,
             result_nodes=self.result,
             dtype=self.dtype,
@@ -105,7 +110,7 @@ def _make_function(
         var_nodes: Sequence[VarNode],
         result_nodes: Sequence[CircuitNode],
         dtype: DTypeNumeric,
-) -> Tuple[RawProgramFunction, int]:
+) -> Tuple[RawProgramFunction, int, int]:
     """
     Make a RawProgram function that interprets the circuit.
 
@@ -115,7 +120,9 @@ def _make_function(
         dtype: a numpy data type that must be a key in the dictionary, DTYPE_TO_CVM_TYPE.
 
     Returns:
-        (function, number_of_tmps)
+        (function, number_of_tmps, number_of_instructions)
     """
     analysis: CircuitAnalysis = analyze_circuit(var_nodes, result_nodes)
+    DEBUG =  _compiler.make_function(analysis, dtype)
+
     return _compiler.make_function(analysis, dtype)

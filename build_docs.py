@@ -1,3 +1,5 @@
+import os
+import pydoc
 import shutil
 import subprocess
 import sys
@@ -8,6 +10,7 @@ from typing import List, Dict, Any
 
 import toml
 
+BUILD_API_DOC: bool = True
 FORCE_REBUILD: bool = True
 INSTANTIATE_TEMPLATES: bool = True
 EXECUTE_NOTEBOOKS: bool = True
@@ -25,24 +28,46 @@ def main() -> None:
     they will be used directly by Read The Docs when pushed to GitHub.
     """
     project_dir: Path = Path(__file__).parent
+    src_dir: Path = project_dir / 'src'
+    ck_package_dir: Path = src_dir / 'ck'
     docs_dir: Path = project_dir / 'docs'
     build_dir: Path = docs_dir / '_build'
     html_index = build_dir / 'html/index.html'
+    api_docs_dir = docs_dir / 'api'
+    api_docs_output_dir = api_docs_dir / 'build'
 
-    if INSTANTIATE_TEMPLATES:
-        instantiate_templates(project_dir, docs_dir)
+    if BUILD_API_DOC:
+        # TODO - not working yet
 
-    if FORCE_REBUILD and build_dir.exists():
-        shutil.rmtree(build_dir)
+        # Ensure `_static` directory exists
+        static: Path = api_docs_dir / '_static'
+        if not static.exists():
+            static.mkdir()
 
-    if EXECUTE_NOTEBOOKS:
-        for notebook_path in docs_dir.glob('*.ipynb'):
-            execute_notebook(notebook_path)
+        # Generate RST files
+        cmd: List[str] = ['sphinx-apidoc', '-o',  api_docs_output_dir.as_posix(), ck_package_dir.as_posix()]
+        subprocess.run(cmd, capture_output=False, check=True)
 
-    run_jupyter_book()
+        # Generate HTML files
+        cmd: List[str] = ['sphinx-build', '-b',  'html', api_docs_dir.as_posix(), api_docs_output_dir.as_posix()]
+        subprocess.run(cmd, capture_output=False, check=True)
 
-    if OPEN_DOCUMENT_HTML:
-        webbrowser.open(html_index.as_uri())
+    # TODO Disabled for now while debugging API documentation generation process.
+    #
+    # if INSTANTIATE_TEMPLATES:
+    #     instantiate_templates(project_dir, docs_dir)
+    #
+    # if FORCE_REBUILD and build_dir.exists():
+    #     shutil.rmtree(build_dir)
+    #
+    # if EXECUTE_NOTEBOOKS:
+    #     for notebook_path in docs_dir.glob('*.ipynb'):
+    #         execute_notebook(notebook_path)
+    #
+    # run_jupyter_book()
+    #
+    # if OPEN_DOCUMENT_HTML:
+    #     webbrowser.open(html_index.as_uri())
 
 
 def run_jupyter_book() -> None:

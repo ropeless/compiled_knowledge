@@ -1,4 +1,4 @@
-from typing import Sequence, Iterable, Tuple, Dict, List
+from typing import Sequence, Iterable, Tuple, Dict
 
 from ck.pgm import RandomVariable, Indicator, Instance
 from ck.probability.probability_space import ProbabilitySpace, Condition, check_condition
@@ -10,6 +10,8 @@ class EmpiricalProbabilitySpace(ProbabilitySpace):
         Enable probabilistic queries over a sample from a sample space.
         Note that this is not necessarily an efficient approach to calculating probabilities and statistics.
 
+        This probability space treats each of the samples as equally weighted.
+
         Assumes:
             len(sample) == len(rvs), for each sample in samples.
             0 <= sample[i] < len(rvs[i]), for each sample in samples, for i in range(len(rvs)).
@@ -19,7 +21,7 @@ class EmpiricalProbabilitySpace(ProbabilitySpace):
             samples: instances (state indexes) that are samples from the given rvs.
         """
         self._rvs: Sequence[RandomVariable] = tuple(rvs)
-        self._samples: List[Instance] = list(samples)
+        self._samples: Sequence[Instance] = tuple(samples)
         self._rv_idx_to_sample_idx: Dict[int, int] = {
             rv.idx: i
             for i, rv in enumerate(self._rvs)
@@ -47,4 +49,3 @@ class EmpiricalProbabilitySpace(ProbabilitySpace):
     @property
     def z(self) -> float:
         return len(self._samples)
-

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from itertools import count
-from typing import Callable, Sequence, Optional, Set, Tuple, Dict, Collection
+from typing import Callable, Sequence, Optional, Set, Tuple, Dict, Collection, TypeAlias
 
 from ck.pgm import Instance, RandomVariable, Indicator
 from ck.pgm_circuit.program_with_slotmap import ProgramWithSlotmap
@@ -10,10 +10,13 @@ from ck.utils.map_set import MapSet
 from ck.utils.np_extras import NDArrayStates, NDArrayNumeric
 from ck.utils.random_extras import Random
 
-# Type of a yield function. Support for a sampler.
-# A yield function may be used to implement a sampler's iterator, thus
-# it provides an Instance or single state index.
-YieldF = Callable[[NDArrayStates], int] | Callable[[NDArrayStates], Instance]
+YieldF: TypeAlias = Callable[[NDArrayStates], int] | Callable[[NDArrayStates], Instance]
+YieldF.__doc__ = \
+    """
+    Type of a yield function. Support for a sampler.
+    A yield function may be used to implement a sampler's iterator, thus
+    it provides an Instance or single state index.
+    """
 
 
 @dataclass

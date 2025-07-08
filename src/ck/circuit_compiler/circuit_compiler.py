@@ -13,12 +13,13 @@ class CircuitCompiler(Protocol):
             circuit: Optional[Circuit] = None,
     ) -> RawProgram:
         """
-        A circuit compiler is a function with this signature.
+        A PGM compiler compiles selected results nodes of an arithmetic circuit to a program.
 
         Args:
             *result: one or more circuit of nodes defining the result of the program function.
                 All result node must be from the same circuit.
-            input_vars: how to determine the input variables. Default is to use all circuit variables, in index order.
+            input_vars: how to determine the input variables. Either a sequence of VarNodes, or a single
+                VarNode, or a `InferVars` member. The default is to use all circuit variables, in index order.
             circuit: optionally explicitly specify the Circuit (mandatory if no result nodes are provided).
 
         Returns:

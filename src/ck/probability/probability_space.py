@@ -1,10 +1,7 @@
-"""
-An abstract class for object providing probabilities.
-"""
 import math
 from abc import ABC, abstractmethod
 from itertools import chain
-from typing import Sequence, Tuple, Iterable, Callable
+from typing import Sequence, Tuple, Iterable, Callable, TypeAlias
 
 import numpy as np
 
@@ -13,8 +10,20 @@ from ck.utils.iter_extras import combos as _combos
 from ck.utils.map_set import MapSet
 from ck.utils.np_extras import dtype_for_number_of_states, NDArrayFloat64, DTypeStates, NDArrayNumeric
 
-# Type defining a condition.
-Condition = None | Indicator | Iterable[Indicator]
+Condition: TypeAlias = None | Indicator | Iterable[Indicator]
+Condition.__doc__ = \
+    """
+    Type defining a condition. A condition is logically a set of
+    indicators, each indicator representing a random variable being in some state.
+    
+    If multiple indicators of the same random variable appear in
+    a condition, then they are interpreted as
+    a disjunction, otherwise indicators are interpreted as
+    a conjunction. E.g.,  the condition (X=0, Y=1, Y=3) means
+    X=0 and (Y=1 or Y=3).
+    """
+
+_NAN: float = np.nan  # Not-a-number (i.e., the result of an invalid calculation).
 
 
 class ProbabilitySpace(ABC):
@@ -41,13 +50,9 @@ class ProbabilitySpace(ABC):
         """
         Return the weight of instances matching the given condition.
 
-        If multiple indicators of the same random variable appear in
-        the parameter 'indicators' then they are interpreted as
-        a disjunction, otherwise indicators are interpreted as
-        a conjunction. E.g.:  X=0, Y=1, Y=3  means X=0 and (Y=1 or Y=3)
-
         Args:
-            condition: zero or more indicators that specify a condition.
+            condition: a condition restricting the instances that are
+                considered in the result.
         """
 
     @property
@@ -56,6 +61,7 @@ class ProbabilitySpace(ABC):
         """
         Return the summed weight of all instances.
         This is equivalent to self.wmc(), with no arguments.
+        This is also known as the "partition function".
         """
 
     def probability(self, *indicators: Indicator, condition: Condition = ()) -> float:
@@ -80,11 +86,11 @@ class ProbabilitySpace(ABC):
         if len(condition) == 0:
             z = self.z
             if z <= 0:
-                return np.nan
+                return _NAN
         else:
             z = self.wmc(*condition)
             if z <= 0:
-                return np.nan
+                return _NAN
 
             # Combine the indicators with the condition
             # If a variable is mentioned in both the indicators and condition, then
@@ -617,6 +623,6 @@ def _normalise_marginal(distribution: NDArrayFloat64) -> None:
     """
     total = np.sum(distribution)
     if total <= 0:
-        distribution[:] = np.nan
+        distribution[:] = _NAN
     elif total != 1:
         distribution /= total

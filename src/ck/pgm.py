@@ -1,6 +1,3 @@
-"""
-For more documentation on this module, refer to the Jupyter notebook docs/4_PGM_advanced.ipynb.
-"""
 from __future__ import annotations
 
 import math
@@ -8,7 +5,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from itertools import repeat as _repeat
 from typing import Sequence, Tuple, Dict, Optional, overload, Set, Iterable, List, Union, Callable, \
-    Collection, Any, Iterator
+    Collection, Any, Iterator, TypeAlias
 
 import numpy as np
 
@@ -17,21 +14,34 @@ from ck.utils.iter_extras import (
 )
 from ck.utils.np_extras import NDArrayFloat64, NDArrayUInt8
 
-# What types are permitted as random variable states
-State = Union[int, str, bool, float, None]
+State: TypeAlias = Union[int, str, bool, float, None]
+State.__doc__ = \
+    """
+    The type for a possible state of a random variable.
+    """
 
-# An instance (of a sequence of random variables) is a tuple of integers
-# that are state indexes, co-indexed with a known sequence of random variables.
-Instance = Sequence[int]
+Instance: TypeAlias = Sequence[int]
+Instance.__doc__ = \
+    """
+    An instance (of a sequence of random variables) is a sequence of integers
+    that are state indexes, co-indexed with a known sequence of random variables.
+    """
 
-# A key identifies an instance.
-# A single integer is treated as an instance with one dimension.
-Key = Union[Sequence[int], int]
+Key: TypeAlias = Union[Instance, int]
+Key.__doc__ = \
+    """
+    A key identifies an instance, either as an instance itself or a
+    single integer, representing an instance with one dimension.
+    """
 
-# The shape of a sequence of random variables (e.g., a PGM, Factor or PotentialFunction).
-Shape = Sequence[int]
+Shape: TypeAlias = Sequence[int]
+Key.__doc__ = \
+    """
+    The type for the "shape" of a sequence of random variables.
+    That is, the shape of (rv1, rv2, rv3) is (len(rv1), len(rv2), len(rv3)).
+    """
 
-DEFAULT_TOLERANCE: float = 0.000001  # For checking CPT sums.
+DEFAULT_CPT_TOLERANCE: float = 0.000001  # A tolerance when checking CPT distributions sum to one (or zero).
 
 
 class PGM:
@@ -39,11 +49,9 @@ class PGM:
     A probabilistic graphical model (PGM) represents a joint probability distribution over
     a set of random variables. Specifically, a PGM is a factor graph with discrete random variables.
 
-    Add a random variable to a PGM, pgm, using `rv = pgm.new_rv(...)`.
+    Add a random variable to a PGM, `pgm`, using `rv = pgm.new_rv(...)`.
 
-    Add a factor to the PGM, pgm, using `factor = pgm.new_factor(...)`.
-
-    A PGM may be given a human-readable name.
+    Add a factor to the PGM, `pgm`, using `factor = pgm.new_factor(...)`.
     """
 
     def __init__(self, name: Optional[str] = None):
@@ -587,7 +595,7 @@ class PGM:
         # All tests passed
         return True
 
-    def factors_are_cpts(self, tolerance: float = DEFAULT_TOLERANCE) -> bool:
+    def factors_are_cpts(self, tolerance: float = DEFAULT_CPT_TOLERANCE) -> bool:
         """
         Are all factor potential functions set with parameters values
         conforming to Conditional Probability Tables.
@@ -603,7 +611,7 @@ class PGM:
         """
         return all(function.is_cpt(tolerance) for function in self.functions)
 
-    def check_is_bayesian_network(self, tolerance: float = DEFAULT_TOLERANCE) -> bool:
+    def check_is_bayesian_network(self, tolerance: float = DEFAULT_CPT_TOLERANCE) -> bool:
         """
         Is this PGM a Bayesian network.
 
@@ -648,7 +656,7 @@ class PGM:
         This method has the same semantics as `ProbabilitySpace.wmc` without conditioning.
 
         Warning:
-            this is potentially computationally expensive as it marginalised random
+            this is potentially computationally expensive as it marginalises random
             variables not mentioned in the given indicators.
 
         Args:
@@ -658,29 +666,11 @@ class PGM:
             the product of factors, conditioned on the given instance. This is the
             computed value of the PGM, conditioned on the given instance.
         """
-        # # Create a filter from the indicators
-        # inst_filter: List[Set[int]] = [set() for _ in range(self.number_of_rvs)]
-        # for indicator in indicators:
-        #     rv_idx: int = indicator.rv_idx
-        #     inst_filter[rv_idx].add(indicator.state_idx)
-        # # Collect rvs not mentioned - to marginalise
-        # for rv, rv_filter in zip(self.rvs, inst_filter):
-        #     if len(rv_filter) == 0:
-        #         rv_filter.update(rv.state_range())
-        #
-        # def _sum_inst(_instance: Instance) -> bool:
-        #     return all(
-        #         (_state in _rv_filter)
-        #         for _state, _rv_filter in zip(_instance, inst_filter)
-        #     )
-        #
-        # # Accumulate the result
-        # sum_value = 0
-        # for instance in self.instances():
-        #     if _sum_inst(instance):
-        #         sum_value += self.value_product(instance)
-        #
-        # return sum_value
+        # Rather than naively checking all possible states of the PGM random
+        # variables, this method works to define the state space that should
+        # be summed over, based on the given indicators. Thus, if the given
+        # indicators constrain the state space to a small number of possibilities,
+        # then the sum is only performed over those possibilities.
 
         # Work out the space to sum over
         sum_space_set: List[Optional[Set[int]]] = [None] * self.number_of_rvs
@@ -719,11 +709,10 @@ class PGM:
             precision: a limit on the render precision of floating point numbers.
             max_state_digits: a limit on the number of digits when showing number of states as an integer.
         """
-        # limit the precision when displaying number of states
+        # Determine a limit to precision when displaying number of states
         num_states: int = self.number_of_states
         number_of_parameters = sum(function.number_of_parameters for function in self.functions)
         number_of_nz_parameters = sum(function.number_of_parameters for function in self.non_zero_functions)
-
         if math.log10(num_states) > max_state_digits:
             log_states = math.log10(num_states)
             exp = int(log_states)
@@ -731,7 +720,6 @@ class PGM:
             num_states_str = f'{man:,.{precision}f}e+{exp}'
         else:
             num_states_str = f'{num_states:,}'
-
         log_2_num_states = math.log2(num_states)
         if (
                 log_2_num_states == 0
@@ -820,9 +808,9 @@ class PGM:
 
         For a factor `f` the value of states[f.idx] is the search state.
         Specifically:
-        state 0 => the factor has not been seen yet,
-        state 1 => the factor is seen but not fully processed,
-        state 2 => the factor is fully processed.
+            state 0 => the factor has not been seen yet,
+            state 1 => the factor is seen but not fully processed,
+            state 2 => the factor is fully processed.
 
         Args:
             factor: the current Factor being checked.
@@ -1040,7 +1028,7 @@ class RandomVariable(Sequence[Indicator]):
 
     def state_range(self) -> Iterable[int]:
         """
-        Iterate over the state indexes of this random variable, in order.
+        Iterate over the state indexes of this random variable, in ascending order.
 
         Returns:
             range(len(self))
@@ -1122,18 +1110,19 @@ class RandomVariable(Sequence[Indicator]):
 
     def __eq__(self, other) -> bool:
         """
-        Two random variable are equal if they are the same object.
+        Two random variables are equal if they are the same object.
         """
         return self is other
 
     def equivalent(self, other: RandomVariable | Sequence[Indicator]) -> bool:
         """
-        Two random variable are equivalent if their indicators are equal. Only
-        random variable indexes and state indexes are checked.
-
+        Two random variable are equivalent if their indicators are equal.
+        Only random variable indexes and state indexes are checked.
         This ignores the names of the random variable and the names of their states.
-        This means their indicators will work correctly in slot maps, even
-        if from different PGMs.
+
+        Slot maps operate across `equivalent` random variables.
+        This means indicators of equivalent random variables will work
+        correctly in slot maps, even if from different PGMs.
 
         Args:
             other: either a random variable or a sequence of Indicators.
@@ -1181,7 +1170,8 @@ class RandomVariable(Sequence[Indicator]):
         """
         Returns the first index of `value`.
         Raises ValueError if the value is not present.
-        Contracted by Sequence[Indicator].
+
+        This method is contracted by `Sequence[Indicator]`.
 
         Warning:
             This method is different to `self.idx`.
@@ -1198,7 +1188,10 @@ class RandomVariable(Sequence[Indicator]):
     def count(self, value: Any) -> int:
         """
         Returns the number of occurrences of `value`.
-        Contracted by Sequence[Indicator].
+        That is, if `value` is an indicator of this random variable
+        then 1 is returned, otherwise 0 is returned.
+
+        This method is contracted by `Sequence[Indicator]`.
         """
         if isinstance(value, Indicator):
             if value.rv_idx == self._idx and 0 <= value.state_idx < len(self):
@@ -1210,15 +1203,16 @@ class RVMap(Sequence[RandomVariable]):
     """
     Wrap a PGM to provide convenient access to PGM random variables.
 
-    An RVMap of a PGM behaves exactly like the PGM `rvs` property. That it, it
-    behaves like a sequence of RandomVariable objects.
+    An RVMap of a PGM behaves like the PGM `rvs` property (sequence of
+    RandomVariable objects), with additional access methods for the PGM's
+    random variables.
 
     If the underlying PGM is updated, then the RVMap will automatically update.
 
-    Additionally, an RVMap enables access to the PGM random variable via the name
-    of each random variable.
+    In addition to accessing a random variable by its index, an RVMap enables
+    access to the PGM random variable via the name of each random variable.
 
-    for example, if `pgm.rvs[1]` is a random variable named `xray`, then
+    For example, if `pgm.rvs[1]` is a random variable named `xray`, then:
     ```
     rvs = RVMap(pgm)
 
@@ -1228,7 +1222,7 @@ class RVMap(Sequence[RandomVariable]):
     xray = rvs.xray
     ```
 
-    To use an RVMap on a PGM, the variable names must be unique across the PGM.
+    To use an RVMap on a PGM, the random variable names must be unique across the PGM.
     """
 
     def __init__(self, pgm: PGM, ignore_case: bool = False):
@@ -1247,28 +1241,6 @@ class RVMap(Sequence[RandomVariable]):
         # Force the rv map cache to be updated.
         # This may raise an exception.
         _ = self._rv_map
-
-    def _clean_name(self, name: str) -> str:
-        """
-        Adjust the case of the given name as needed.
-        """
-        return name.lower() if self._ignore_case else name
-
-    @property
-    def _rv_map(self) -> Dict[str, RandomVariable]:
-        """
-        Get the cached rv map, updating as needed if the PGM changed.
-        Returns:
-            a mapping from random variable name to random variable
-        """
-        if len(self.__rv_map) != len(self._pgm.rvs):
-            # There is a difference between the map and the PGM - create a new map.
-            self.__rv_map = {self._clean_name(rv.name): rv for rv in self._pgm.rvs}
-            if len(self.__rv_map) != len(self._pgm.rvs):
-                raise RuntimeError(f'random variable names are not unique')
-            if not self._reserved_names.isdisjoint(self.__rv_map.keys()):
-                raise RuntimeError(f'random variable names clash with reserved names.')
-        return self.__rv_map
 
     def new_rv(self, name: str, states: Union[int, Sequence[State]]) -> RandomVariable:
         """
@@ -1303,6 +1275,29 @@ class RVMap(Sequence[RandomVariable]):
 
     def __getattr__(self, rv_name: str) -> RandomVariable:
         return self(rv_name)
+
+    @property
+    def _rv_map(self) -> Dict[str, RandomVariable]:
+        """
+        Get the cached random variable map, updating as needed if the PGM changed.
+
+        Returns:
+            a mapping from random variable name to random variable
+        """
+        if len(self.__rv_map) != len(self._pgm.rvs):
+            # There is a difference between the map and the PGM - create a new map.
+            self.__rv_map = {self._clean_name(rv.name): rv for rv in self._pgm.rvs}
+            if len(self.__rv_map) != len(self._pgm.rvs):
+                raise RuntimeError(f'random variable names are not unique')
+            if not self._reserved_names.isdisjoint(self.__rv_map.keys()):
+                raise RuntimeError(f'random variable names clash with reserved names.')
+        return self.__rv_map
+
+    def _clean_name(self, name: str) -> str:
+        """
+        Adjust the case of the given name as needed.
+        """
+        return name.lower() if self._ignore_case else name
 
 
 class Factor:
@@ -1544,7 +1539,7 @@ class Factor:
         self._potential_function = ClausePotentialFunction(self, key)
         return self._potential_function
 
-    def set_cpt(self, tolerance: float = DEFAULT_TOLERANCE) -> CPTPotentialFunction:
+    def set_cpt(self, tolerance: float = DEFAULT_CPT_TOLERANCE) -> CPTPotentialFunction:
         """
         Set to the potential function to a new `CPTPotentialFunction` object.
 
@@ -1820,7 +1815,7 @@ class PotentialFunction(ABC):
         """
         ...
 
-    def is_cpt(self, tolerance=DEFAULT_TOLERANCE) -> bool:
+    def is_cpt(self, tolerance=DEFAULT_CPT_TOLERANCE) -> bool:
         """
         Is the potential function set with parameters values conforming to a
         Conditional Probability Table.
@@ -2028,7 +2023,7 @@ class ZeroPotentialFunction(PotentialFunction):
     def param_idx(self, key: Key) -> int:
         return _natural_key_idx(self._shape, key)
 
-    def is_cpt(self, tolerance=DEFAULT_TOLERANCE) -> bool:
+    def is_cpt(self, tolerance=DEFAULT_CPT_TOLERANCE) -> bool:
         return True
 
 
@@ -2836,7 +2831,7 @@ class ClausePotentialFunction(PotentialFunction):
         else:
             return None
 
-    def is_cpt(self, tolerance=DEFAULT_TOLERANCE) -> bool:
+    def is_cpt(self, tolerance=DEFAULT_CPT_TOLERANCE) -> bool:
         """
         A ClausePotentialFunction can only be a CTP when all entries are zero.
         """
@@ -2930,7 +2925,7 @@ class CPTPotentialFunction(PotentialFunction):
     def number_of_parameters(self) -> int:
         return len(self._values)
 
-    def is_cpt(self, tolerance=DEFAULT_TOLERANCE) -> bool:
+    def is_cpt(self, tolerance=DEFAULT_CPT_TOLERANCE) -> bool:
         if tolerance >= self._tolerance:
             return True
         else:
@@ -3015,12 +3010,11 @@ class CPTPotentialFunction(PotentialFunction):
 
     def cpds(self) -> Iterable[Tuple[Instance, Sequence[float]]]:
         """
-        Iterate over (parent_states, cpd) tuples.
-        This will exclude zero CPDs.
-        Do not change CPDs to (or from) zero while iterating over them.
-        
-        Get the CPD conditioned on parent states indicated by `parent_states`.
-        
+        Iterate over (parent_states, cpd) tuples. This will exclude zero CPDs.
+
+        Warning:
+            Do not change CPDs to (or from) zero while iterating over them.
+
         Returns:
             an iterator over pairs (instance, cpd) where,
             instance: is indicates the state of the parent random variables.
@@ -3288,7 +3282,7 @@ def check_key(shape: Shape, key: Key) -> Instance:
         A instance from the state space, as a tuple of state indexes, co-indexed with the given shape.
 
     Raises:
-        KeyError if the key is not valid.
+        KeyError if the key is not valid for the given shape.
     """
     _key: Instance = _key_to_instance(key)
     if len(_key) != len(shape):
@@ -3336,8 +3330,8 @@ def rv_instances(*rvs: RandomVariable, flip: bool = False) -> Iterable[Instance]
         flip: if true, then first random variable changes most quickly.
 
     Returns:
-        an iteration over tuples, each tuple holds state indexes
-        co-indexed with the given random variables.
+        an iteration over instances, each instance is a tuple of state
+        indexes, co-indexed with the given random variables.
     """
     shape = [len(rv) for rv in rvs]
     return _combos_ranges(shape, flip=not flip)
@@ -3383,6 +3377,10 @@ def _key_to_instance(key: Key) -> Instance:
 def _natural_key_idx(shape: Shape, key: Key) -> int:
     """
     What is the natural index of the given key, assuming the given shape.
+
+    The natural index of an instance is defined as the index of the
+    instance if all instances for the shape are enumerated as per
+    `rv_instances`.
 
     Args:
         shape: the shape defining the state space.

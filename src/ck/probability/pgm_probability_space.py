@@ -1,6 +1,6 @@
-from typing import Sequence, Iterable, Tuple, Dict, List
+from typing import Sequence, Tuple
 
-from ck.pgm import RandomVariable, Indicator, Instance, PGM
+from ck.pgm import RandomVariable, Indicator, PGM
 from ck.probability.probability_space import ProbabilitySpace, Condition, check_condition
 
 
@@ -12,6 +12,11 @@ class PGMProbabilitySpace(ProbabilitySpace):
 
         Args:
             pgm: The PGM to query.
+
+        Warning:
+            The resulting probability space assumes that the value of the partition
+            function, `z`, remains constant for the lifetime of the PGM. If the value
+            changes, then probabilities and statistics will be incorrect.
         """
         self._pgm = pgm
         self._z = None
@@ -29,4 +34,3 @@ class PGMProbabilitySpace(ProbabilitySpace):
         if self._z is None:
             self._z = self._pgm.value_product_indicators()
         return self._z
-

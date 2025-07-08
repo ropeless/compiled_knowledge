@@ -7,7 +7,7 @@ from ck.pgm_circuit import PGMCircuit
 class PGMCompiler(Protocol):
     def __call__(self, pgm: PGM, *, const_parameters: bool = True) -> PGMCircuit:
         """
-        A PGM compiler is a function with this signature.
+        A PGM compiler compiles a PGM to an arithmetic circuit.
 
         Args:
             pgm: The PGM to compile.

@@ -192,7 +192,7 @@ def _make_spanning_tree_small_root(cost: NDArrayFloat64, clusters: List[Set[int]
     Returns:
         (spanning_tree, root_index)
 
-        spanning_tree: is a spanning tree represented as a list of nodes, the list is coindexed with
+        spanning_tree: is a spanning tree represented as a list of nodes, the list is co-indexed with
         the given cost matrix, each node is a list of children, each child being
         represented as an index into the list of nodes.
 
@@ -219,7 +219,7 @@ def _make_spanning_tree_arbitrary_root(cost: NDArrayFloat64) -> Tuple[List[List[
     Returns:
         (spanning_tree, root_index)
 
-        spanning_tree: is a spanning tree represented as a list of nodes, the list is coindexed with
+        spanning_tree: is a spanning tree represented as a list of nodes, the list is co-indexed with
         the given cost matrix, each node is a list of children, each child being
         represented as an index into the list of nodes.
 
@@ -243,7 +243,7 @@ def _make_spanning_tree_at_root(
         root_custer_index: a nominated root cluster to be the root of the tree.
 
     Returns:
-        a spanning tree represented as a list of nodes, the list is coindexed with
+        a spanning tree represented as a list of nodes, the list is co-indexed with
         the given cost matrix, each node is a list of children, each child being
         represented as an index into the list of nodes. The root node is the
         index `root_custer_index` as passed to this function.

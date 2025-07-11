@@ -8,7 +8,8 @@ class DiamondSquare(PGM):
     This PGM is the 'DiamondSquare' factor graph.
 
     The DiamondSquare is a factor graph with seven random variables (a, b, c, ..., h).
-    Binary factors are between pairs of random variables creating the pattern:
+    Binary factors are between pairs of random variables creating the pattern::
+
                      b
                     / \
                    /   \
@@ -20,6 +21,7 @@ class DiamondSquare(PGM):
                   \   /
                    \ /
                     g
+
     If include_unaries then, also includes one unary factor per random variable.
     """
 

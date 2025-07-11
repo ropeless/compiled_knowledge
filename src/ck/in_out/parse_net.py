@@ -16,36 +16,37 @@ def read_network(input_stream, *, name: Optional[str] = None, network_builder: O
     The input can be a string or a stream.
     If the input is empty, then its is treated as an error.
 
-    This input is expected to conform to the following format.
+    This input is expected to conform to the following format::
 
-    <network> ::= <net_block> <node_block>* <potential_block>*
+        <network> ::= <net_block> <node_block>* <potential_block>*
 
-    <net_block> ::= 'net' <block>
+        <net_block> ::= 'net' <block>
 
-    <node_block> ::= 'node' <NAME> <block>
+        <node_block> ::= 'node' <NAME> <block>
 
-    <potential_block> ::= 'potential' <link> <block>
+        <potential_block> ::= 'potential' <link> <block>
 
-    <block> ::= '{' <sentence>* '}'
-    <sentence> ::= <NAME> '=' <value> ';'
+        <block> ::= '{' <sentence>* '}'
+        <sentence> ::= <NAME> '=' <value> ';'
 
-    <link> ::= '(' <NAME> ')'
-             | '(' <NAME> '|' <NAME>+ ')'
+        <link> ::= '(' <NAME> ')'
+                 | '(' <NAME> '|' <NAME>+ ')'
 
-    <value> ::= <STRING> | <NUMBER> | <list>
-    <list> ::='(' <value>* ')'
+        <value> ::= <STRING> | <NUMBER> | <list>
+        <list> ::='(' <value>* ')'
 
     The sentences of a <net_block> are ignored.
 
-    The sentences of a <node_block>
-        <name> of 'states' mandatory, with value that is a list of <STRING>
-        other sentences are ignored.
+    In a <node_block>,
+    <name> of 'states' mandatory, with value that is a list of <STRING>
+    other sentences are ignored.
 
-    The sentences of a <potential_block>
-        <name> of 'data' mandatory, with value that is a list of (list of)* <NUMBER> (shape matching the link)
-        other sentences are ignored.
+    In a <potential_block>,
+    <name> of 'data' is mandatory, with value that is a list of (list of) <NUMBER> (shape matching the link)
+    other sentences are ignored.
 
-    Here is a simple example input:
+    Here is a simple example input::
+
         net{}
         node a
         {
@@ -62,8 +63,9 @@ def read_network(input_stream, *, name: Optional[str] = None, network_builder: O
         }
         potential ( b | a )
         {
-          data = ((0.4 0.4 0.2)(0.4 0.4 0.2)) ;
+          data = ((0.4 0.4 0.2)(0.4 0.4 0.2));
         }
+
     """
     # Decorate the input stream
     input_stream = ParserInput(input_stream)

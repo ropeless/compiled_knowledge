@@ -16,33 +16,42 @@ class PGMCircuit:
     holds the values of the parameters. Specifically, given parameter id `param_id`, then
     `parameter_values[slot_map[param_id] - number_of_indicators]` is the value of the
     identified parameter as it was in the PGM.
-
-    Fields:
-        rvs: holds the random variables from the PGM as it was compiled, in order.
-
-        conditions: any conditions on `rvs` that were compiled into the circuit.
-
-        number_of_indicators: is the number of indicators in `rvs` which is
-            `sum(len(rv) for rv in rvs`. Specifically, `circuit.vars[i]` is the circuit variable
-            corresponding to the ith indicator, where `circuit` is `circuit_top.circuit` and
-            indicators are ordered as per `rvs`.
-
-        number_of_parameters: is the number of parameters from the PGM that are
-            represented as circuit variables. This may be zero if parameters from the PGM
-            were compiled as constants.
-
-        slot_map[x]: gives the index of the circuit variable corresponding to x,
-            where x is either a random variable indicator (Indicator) or a parameter id (ParamId).
-
     """
 
     rvs: Sequence[RandomVariable]
+    """holds the random variables from the PGM as it was compiled, in order."""
+
     conditions: Sequence[Indicator]
+    """any conditions on `rvs` that were compiled into the circuit."""
+
     circuit_top: CircuitNode
+    """the top circuit node defining the network function."""
+
     number_of_indicators: int
+    """
+    the number of indicators in `rvs` which is
+    `sum(len(rv) for rv in rvs`. Specifically, `circuit.vars[i]` is the circuit variable
+    corresponding to the ith indicator, where `circuit` is `circuit_top.circuit` and
+    indicators are ordered as per `rvs`.
+    """
+
     number_of_parameters: int
+    """
+    the number of parameters from the PGM that are
+    represented as circuit variables. This may be zero if parameters from the PGM
+    were compiled as constants.
+    """
+
     slot_map: SlotMap
+    """
+    gives the index of the circuit variable corresponding to x,
+    where x is either a random variable indicator (Indicator) or a parameter id (ParamId).
+    """
+
     parameter_values: NDArray
+    """
+    parameter values, co-indexed with the circuit variables, counting beyond `number_of_indicators`.
+    """
 
     def dump(self, *, prefix: str = '', indent: str = '    ') -> None:
         """

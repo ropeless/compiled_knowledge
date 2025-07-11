@@ -114,7 +114,10 @@ class ProgramWithSlotmap:
 
     def compute_conditioned(self, *condition: Condition) -> NDArrayNumeric:
         """
-        Equivalent to:
+        Compute the program value, after setting the given condition.
+
+        Equivalent to::
+
             self.set_condition(*condition)
             return self.compute()
         """

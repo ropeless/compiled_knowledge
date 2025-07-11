@@ -15,33 +15,32 @@ from ck.utils.iter_extras import (
 from ck.utils.np_extras import NDArrayFloat64, NDArrayUInt8
 
 State: TypeAlias = Union[int, str, bool, float, None]
-State.__doc__ = \
-    """
-    The type for a possible state of a random variable.
-    """
+"""
+The type for a possible state of a random variable.
+"""
 
 Instance: TypeAlias = Sequence[int]
-Instance.__doc__ = \
-    """
-    An instance (of a sequence of random variables) is a sequence of integers
-    that are state indexes, co-indexed with a known sequence of random variables.
-    """
+"""
+An instance (of a sequence of random variables) is a sequence of integers
+that are state indexes, co-indexed with a known sequence of random variables.
+"""
 
 Key: TypeAlias = Union[Instance, int]
-Key.__doc__ = \
-    """
-    A key identifies an instance, either as an instance itself or a
-    single integer, representing an instance with one dimension.
-    """
+"""
+A key identifies an instance, either as an instance itself or a
+single integer, representing an instance with one dimension.
+"""
 
 Shape: TypeAlias = Sequence[int]
-Key.__doc__ = \
-    """
-    The type for the "shape" of a sequence of random variables.
-    That is, the shape of (rv1, rv2, rv3) is (len(rv1), len(rv2), len(rv3)).
-    """
+"""
+The type for the "shape" of a sequence of random variables.
+That is, the shape of (rv1, rv2, rv3) is (len(rv1), len(rv2), len(rv3)).
+"""
 
-DEFAULT_CPT_TOLERANCE: float = 0.000001  # A tolerance when checking CPT distributions sum to one (or zero).
+DEFAULT_CPT_TOLERANCE: float = 0.000001
+"""
+A tolerance when checking CPT distributions sum to one (or zero).
+"""
 
 
 class PGM:
@@ -214,14 +213,17 @@ class PGM:
         The returned random variable will have an `idx` equal to the value of
         `self.number_of_rvs` just prior to adding the new random variable.
 
+        The states of the random variable can be specified either as an integer
+        representing the number of states, or as a sequence of state values. If a
+        single integer, `n`, is provided then the states will be: 0, 1, ..., n-1.
+        If a sequence of states are provided then the states must be unique.
+
         Assumes:
             Provided states contain no duplicates.
 
         Args:
             name: a name for the random variable.
-            states: either an integer number of states or a sequence of state values. If a
-                single integer, `n`, is provided then the states will be 0, 1, ..., n-1.
-                If a sequence of states are provided then the states must be unique.
+            states: either the number of states or a sequence of state values.
 
         Returns:
             a RandomVariable object belonging to this PGM.
@@ -241,10 +243,11 @@ class PGM:
 
         Assumes:
             The given random variables all belong to this PGM.
+
             The random variables contain no duplicates.
 
         Args:
-            *rvs: the random variables.
+            rvs: the random variables.
 
         Returns:
             a Factor object belonging to this PGM.
@@ -336,17 +339,18 @@ class PGM:
             *input_rvs: RandomVariable
     ) -> Factor:
         """
-        Add a sparse 0/1 factor to this PGM representing:
-            result_rv ==  function(*rvs).
-        That is:
+        Add a sparse 0/1 factor to this PGM representing `result_rv == function(*rvs)`.
+        That is::
+
             factor[result_s, *input_s] = 1, if result_s == function(*input_s);
                                        = 0, otherwise.
+
         Args:
             function: a function from state indexes of the input random variables to a state index
                 of the result random variable. The function should take the same number of arguments
                 as `input_rvs` and return a state index for `result_rv`.
             result_rv: the random variable defining result values.
-            *input_rvs: the random variables defining input values.
+            input_rvs: the random variables defining input values.
 
         Returns:
             a Factor object belonging to this PGM, with a configured sparse potential function.
@@ -378,16 +382,17 @@ class PGM:
         """
         Render indicators as a string.
 
-        For example:
+        For example::
             pgm = PGM()
             a = pgm.new_rv('A', ('x', 'y', 'z'))
             b = pgm.new_rv('B', (3, 5))
             print(pgm.indicator_str(a[0], b[1], a[2]))
-        will print:
+
+        will print::
             A=x, B=5, A=z
 
         Args:
-            *indicators: the indicators to render.
+            indicators: the indicators to render.
             sep: the separator to use between the random variable and its state.
             delim: the delimiter to used when rendering multiple indicators.
 
@@ -406,16 +411,17 @@ class PGM:
         """
         Render indicators as a string, grouping indicators by random variable.
 
-        For example:
+        For example::
             pgm = PGM()
             a = pgm.new_rv('A', ('x', 'y', 'z'))
             b = pgm.new_rv('B', (3, 5))
             print(pgm.condition_str(a[0], b[1], a[2]))
-        will print:
+
+        will print::
             A in {x, z}, B=5
 
         Args:
-            *indicators: the indicators to render.
+            indicators: the indicators to render.
         Return:
             a string representation of the given indicators, as a condition.
         """
@@ -930,9 +936,9 @@ class RandomVariable(Sequence[Indicator]):
     in the random variable's PGM list of random variables.
 
     A random variable behaves like a sequence of Indicators, where each indicator represents a random
-    variable being in a particular state. Specifically for a random variable rv, len(rv) is the
+    variable being in a particular state. Specifically for a random variable rv, `len(rv)` is the
     number of states of the random variable and rv[i] is the Indicators representing that
-    rv is in the ith state. When sliced, the result is a tuple, i.e. rv[1:3] = (rv[1], rv[2]).
+    rv is in the ith state. When sliced, the result is a tuple, i.e. `rv[1:3] = (rv[1], rv[2])`.
 
     A RandomVariable has a name. This is for human convenience and has no functional purpose
     within a PGM.
@@ -942,15 +948,18 @@ class RandomVariable(Sequence[Indicator]):
         """
         Create a new random variable, in the given PGM.
 
+        The states of the random variable can be specified either as an integer
+        representing the number of states, or as a sequence of state values. If a
+        single integer, `n`, is provided then the states will be: 0, 1, ..., n-1.
+        If a sequence of states are provided then the states must be unique.
+
         Assumes:
             Provided states contain no duplicates.
 
         Args:
             pgm: the PGM that the random variable will belong to.
             name: a name for the random variable.
-            states: either an integer number of states or a sequence of state values. If a
-                single integer, `n`, is provided then the states will be 0, 1, ..., n-1.
-                If a sequence of states are provided then the states must be unique.
+            states: either the number of states or a sequence of state values.
         """
         self._pgm: PGM = pgm
         self._name: str = name
@@ -1212,15 +1221,14 @@ class RVMap(Sequence[RandomVariable]):
     In addition to accessing a random variable by its index, an RVMap enables
     access to the PGM random variable via the name of each random variable.
 
-    For example, if `pgm.rvs[1]` is a random variable named `xray`, then:
-    ```
-    rvs = RVMap(pgm)
+    For example, if `pgm.rvs[1]` is a random variable named `xray`, then::
 
-    # These all retrieve the same random variable object.
-    xray = rvs[1]
-    xray = rvs('xray')
-    xray = rvs.xray
-    ```
+        rvs = RVMap(pgm)
+
+        # These all retrieve the same random variable object.
+        xray = rvs[1]
+        xray = rvs('xray')
+        xray = rvs.xray
 
     To use an RVMap on a PGM, the random variable names must be unique across the PGM.
     """
@@ -1527,7 +1535,7 @@ class Factor:
         Set to the potential function to a new `ClausePotentialFunction` object.
 
         Args:
-            *key: defines the random variable states of the clause. The key is a sequence of
+            key: defines the random variable states of the clause. The key is a sequence of
                 random variable state indexes, co-indexed with `Factor.rvs`.
 
         Returns:
@@ -1556,7 +1564,7 @@ class Factor:
         return self._potential_function
 
 
-@dataclass(frozen=True, eq=True)
+@dataclass(frozen=True, eq=True, slots=True)
 class ParamId:
     """
     A ParamId identifies a parameter of a potential function.
@@ -2164,7 +2172,7 @@ class DensePotentialFunction(PotentialFunction):
         """
         Set the values of the potential function using the given iterator.
 
-        Mapping instances to *values is as follows:
+        Mapping instances to values is as follows:
             Given Factor(rv1, rv2) where rv1 has 2 states, and rv2 has 3 states:
             values[0] represents instance (0,0)
             values[1] represents instance (0,1)
@@ -2209,7 +2217,7 @@ class DensePotentialFunction(PotentialFunction):
         The order of values is the same as set_iter.
         
         Args:
-            *value: the values to use.
+            value: the values to use.
             
         Returns:
             self
@@ -2414,7 +2422,7 @@ class SparsePotentialFunction(PotentialFunction):
         """
         Set the values of the potential function using the given iterator.
 
-        Mapping instances to *values is as follows:
+        Mapping instances to values is as follows:
             Given Factor(rv1, rv2) where rv1 has 2 states, and rv2 has 3 states:
             values[0] represents instance (0,0)
             values[1] represents instance (0,1)
@@ -2636,7 +2644,7 @@ class CompactPotentialFunction(PotentialFunction):
         """
         Set the values of the potential function using the given iterator.
 
-        Mapping instances to *values is as follows:
+        Mapping instances to `values` is as follows:
             Given Factor(rv1, rv2) where rv1 has 2 states, and rv2 has 3 states:
             values[0] represents instance (0,0)
             values[1] represents instance (0,1)
@@ -2679,7 +2687,7 @@ class CompactPotentialFunction(PotentialFunction):
         The order of values is the same as set_iter.
 
         Args:
-            *value: the values to use.
+            value: the values to use.
 
         Returns:
             self
@@ -3071,7 +3079,8 @@ class CPTPotentialFunction(PotentialFunction):
         Calls self.set_cpd(parent_states, cpd) for each row (parent_states, cpd)
         in rows. Any unmentioned parent states will have zero probabilities.
 
-        Example usage, assuming three Boolean random variables:
+        Example usage, assuming three Boolean random variables::
+
             pgm.Factor(x, y, z).set_cpt().set(
                 # y  z    x[0] x[1]
                 ((0, 0), (0.1, 0.9)),
@@ -3079,9 +3088,9 @@ class CPTPotentialFunction(PotentialFunction):
                 ((1, 0), (0.1, 0.9)),
                 ((1, 1), (0.1, 0.9))
             )
-        
+
         Args:
-            *rows: are tuples (key, cpd) used to set the potential function values.
+            rows: are tuples (key, cpd) used to set the potential function values.
             
         Raises:
             ValueError: if a CPD is not valid.
@@ -3105,7 +3114,7 @@ class CPTPotentialFunction(PotentialFunction):
         Any list entry may be None, indicating 'guaranteed zero' for the associated parent states.
 
         Args:
-            *cpds: are the CPDs used to set the potential function values.
+            cpds: are the CPDs used to set the potential function values.
             
         Raises:
             ValueError: if a CPD is not valid.

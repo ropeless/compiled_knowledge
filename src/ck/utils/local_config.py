@@ -12,10 +12,13 @@ other getter methods wrap `get`.
 
 The `get` method will search for a value for a requested variable
 using the following steps.
+
 1) Check the `programmatic config` which is a dictionary that
-   can be directly updated.
+can be directly updated.
+
 2) Check the PYTHONPATH for a module called `config` (i.e., a
-   `config.py` file) for global variables defined in that module.
+`config.py` file) for global variables defined in that module.
+
 3) Check the system environment variables (`os.environ`).
 
 Variable names must be a valid Python identifier. Only valid
@@ -171,8 +174,9 @@ def get_params(
     are returned as a single string with `delim` as the delimiter. If
     `delim` is not None then the default value for `sep` is '='.
 
-    For example, assume config.py contains: ABC = 123 and DEF = 456,
-    then:
+    For example, assume `config.py` contains: `ABC = 123` and `DEF = 456`,
+    then::
+
         get_params('ABC') -> ('ABC', 123)
         get_params('ABC', 'DEF') -> ('ABC', 123), ('DEF', 456)
         get_params('ABC', sep='=') = 'ABC=123'
@@ -180,10 +184,14 @@ def get_params(
         get_params('ABC;DEF', delim=';') = 'ABC=123;DEF=456'
         get_params('ABC;DEF', sep='==', delim=';') = 'ABC==123;DEF==456'
 
-    :param keys: the names of variables to access.
-    :param sep: the separator character between {variable} and {value}.
-    :param delim: the delimiter character between key-value pairs.
-    :param config: a Config instance to update. Default is the global config.
+    Args:
+        keys: the names of variables to access.
+        sep: the separator character between {variable} and {value}.
+        delim: the delimiter character between key-value pairs.
+        config: a Config instance to update. Default is the global config.
+
+    Returns:
+        the requested parameter values.
     """
     if delim is not None:
         keys = flatten(key.split(delim) for key in keys)

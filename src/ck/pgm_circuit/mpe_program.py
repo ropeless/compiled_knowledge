@@ -228,10 +228,9 @@ class MPEProgram(ProgramWithSlotmap):
 class MPEResult:
     """
     An MPE result is the result of MPE inference.
-
-    Fields:
-        wmc: the weighted model count value of the MPE solution.
-        mpe: The MPE solution instance. If there are ties then this will just be once instance.
     """
     wmc: float
+    """the weighted model count value of the MPE solution."""
+
     mpe: Instance
+    """the MPE solution instance. If there are ties then this will just be once instance."""

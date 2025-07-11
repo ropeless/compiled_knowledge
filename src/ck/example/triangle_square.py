@@ -8,12 +8,14 @@ class TriangleSquare(PGM):
     This PGM is the 'TriangleSquare' factor graph.
 
     The TriangleSquare is a factor graph with six random variables (a, b, c, ..., f).
-    Binary factors are between pairs of random variables crating the pattern:
+    Binary factors are between pairs of random variables crating the pattern::
+
                   b -- d
                 / |    | \
                a  |    |  f
                 \ |    | /
                   c -- e
+
     If include_unaries then, also includes one unary factor per random variable.
     """
 

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Sequence
+from typing import Callable, Sequence, TypeAlias
 
 import numpy as np
 import ctypes as ct
@@ -7,12 +7,14 @@ import ctypes as ct
 
 from ck.utils.np_extras import NDArrayNumeric, DTypeNumeric
 
-# RawProgramFunction is a function of three ctypes arrays, returning nothing.
-# Args:
-#     [0]: input  values,
-#     [1]: temporary working memory,
-#     [2]: output values.
-RawProgramFunction = Callable[[ct.POINTER, ct.POINTER, ct.POINTER], None]
+RawProgramFunction: TypeAlias = Callable[[ct.POINTER, ct.POINTER, ct.POINTER], None]
+"""
+RawProgramFunction is a function of three ctypes arrays, returning nothing.
+Args:
+    [0]: input  values,
+    [1]: temporary working memory,
+    [2]: output values.
+"""
 
 
 @dataclass
@@ -26,23 +28,28 @@ class RawProgram:
     an efficient method for executing a program as buffers are reallocated for
     each call. Alternatively, a `RawProgram` can be wrapped in a `ProgramBuffer`
     for computationally efficient memory buffer reuse.
-
-    Fields:
-        function: is a function of three ctypes arrays, returning nothing.
-        dtype: the numpy data type of  the array values.
-        number_of_vars: the number of input values (first function argument).
-        number_of_tmps: the number of working memory values (second function argument).
-        number_of_results: the number of result values (third function argument).
-        var_indices: maps the index of inputs (from 0 to self.number_of_vars - 1) to the index
-            of the corresponding circuit var.
     """
 
     function: RawProgramFunction
+    """a function of three ctypes arrays, returning nothing."""
+
     dtype: DTypeNumeric
+    """the numpy data type of  the array values."""
+
     number_of_vars: int
+    """the number of input values (first function argument)."""
+
     number_of_tmps: int
+    """the number of working memory values (second function argument)."""
+
     number_of_results: int
+    """the number of result values (third function argument)."""
+
     var_indices: Sequence[int]
+    """
+    a map from the index of inputs (from 0 to self.number_of_vars - 1) to the index
+    of the corresponding circuit var.
+    """
 
     def __call__(self, var_values: NDArrayNumeric | Sequence[int | float] | int | float) -> NDArrayNumeric:
         """

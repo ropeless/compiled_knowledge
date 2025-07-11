@@ -10,15 +10,16 @@ class TmpConst:
     A TmpConst enables the consistent, temporary setting and clearing
     of circuit variables to constant values.
 
-    Example usage:
+    Example usage::
+
         with TmpConst(my_circuit) as tmp:
             tmp.set_const(0, 123.456)
             tmp.set_const(my_list_of_vars, 110.99)
             program = Program(my_top)
-        # now use 'program'
+        # now use `program`
 
-    Within the 'with' section, circuit variables are set to const values, which
-    the compiler can optimise. When the 'with' section exits, the variables
+    Within the `with` section, circuit variables are set to const values, which
+    the compiler can optimise. When the `with` section exits, the variables
     are restored to their original state.
     """
     __slots__ = ('_circuit', '_undo')

@@ -213,10 +213,10 @@ def compile_llvm_program(
     Compile the given LLVM program.
 
     Returns:
-        (engine, function) where
-        engine: is an LLVM execution engine, which must remain
-            in memory for the returned function to be valid.
-        function: is the raw Python callable for the compiled function.
+        `engine` an LLVM execution engine, which must remain
+        in memory for the returned function to be valid,
+
+        `function` the raw Python callable for the compiled function.
     """
     _init_llvm()
 

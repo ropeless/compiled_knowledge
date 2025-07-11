@@ -33,11 +33,12 @@ def combos(list_of_lists: Sequence[Sequence[_T]], flip=False) -> Iterable[Tuple[
     Iterate over all combinations of taking one element from each of the lists.
 
     The order of results has the first element changing most rapidly.
-    For example, given [[1,2,3],[4,5],[6,7]], combos yields the following:
+    For example, given [[1,2,3],[4,5],[6,7]], combos yields the following::
+
         (1,4,6), (2,4,6), (3,4,6), (1,5,6), (2,5,6), (3,5,6),
         (1,4,7), (2,4,7), (3,4,7), (1,5,7), (2,5,7), (3,5,7).
 
-    If flip, then the last changes most rapidly.
+    If `flip` is true, then the last changes most rapidly.
     """
     num = len(list_of_lists)
     if num == 0:

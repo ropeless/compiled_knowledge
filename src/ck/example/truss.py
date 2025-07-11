@@ -7,12 +7,14 @@ class Truss(PGM):
     This PGM is the 'Truss' factor graph.
 
     The Truss is a factor graph with five random variables (a, b, c, d, e).
-    Binary factors are between pairs of random variables creating the pattern:
+    Binary factors are between pairs of random variables creating the pattern::
+
                   b ---- d
                 / |    / |
                a  |  /   |
                 \ | /    |
                   c ---- e
+
     If include_unaries then, also includes one unary factor per random variable.
     """
 

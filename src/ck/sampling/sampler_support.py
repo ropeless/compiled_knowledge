@@ -11,12 +11,11 @@ from ck.utils.np_extras import NDArrayStates, NDArrayNumeric
 from ck.utils.random_extras import Random
 
 YieldF: TypeAlias = Callable[[NDArrayStates], int] | Callable[[NDArrayStates], Instance]
-YieldF.__doc__ = \
-    """
-    Type of a yield function. Support for a sampler.
-    A yield function may be used to implement a sampler's iterator, thus
-    it provides an Instance or single state index.
-    """
+"""
+Type of a yield function. Support for a sampler.
+A yield function may be used to implement a sampler's iterator, thus
+it provides an Instance or single state index.
+"""
 
 
 @dataclass

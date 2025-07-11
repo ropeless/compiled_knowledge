@@ -57,8 +57,10 @@ class ParserInput:
 
     def readline(self) -> str:
         """
+        Read a line of input.
+
         Returns:
-             the next line (including the trailing '\n') or '' if EOF.
+             the next line (including the trailing newline) or empty string if EOF.
         """
         line = ''
         while True:
@@ -69,9 +71,11 @@ class ParserInput:
 
     def read_past_space(self, single_line: bool, comment_char=None) -> str:
         """
+        Read the input up to and including the first non-whitespace character.
+
         Returns:
-            either empty string, '', if end of input, otherwise a single character string that is not whitespace.
-            If single_line is True, then '\n' is treated as eof.
+            either empty string, if end of input, otherwise a single character string that is not whitespace.
+            If single_line is True, then newline is treated as eof.
         """
         c = self.read_one()
         while True:

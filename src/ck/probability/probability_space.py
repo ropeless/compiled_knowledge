@@ -11,17 +11,16 @@ from ck.utils.map_set import MapSet
 from ck.utils.np_extras import dtype_for_number_of_states, NDArrayFloat64, DTypeStates, NDArrayNumeric
 
 Condition: TypeAlias = None | Indicator | Iterable[Indicator]
-Condition.__doc__ = \
-    """
-    Type defining a condition. A condition is logically a set of
-    indicators, each indicator representing a random variable being in some state.
-    
-    If multiple indicators of the same random variable appear in
-    a condition, then they are interpreted as
-    a disjunction, otherwise indicators are interpreted as
-    a conjunction. E.g.,  the condition (X=0, Y=1, Y=3) means
-    X=0 and (Y=1 or Y=3).
-    """
+"""
+Type defining a condition. A condition is logically a set of
+indicators, each indicator representing a random variable being in some state.
+
+If multiple indicators of the same random variable appear in
+a condition, then they are interpreted as
+a disjunction, otherwise indicators are interpreted as
+a conjunction. E.g.,  the condition (X=0, Y=1, Y=3) means
+X=0 and (Y=1 or Y=3).
+"""
 
 _NAN: float = np.nan  # Not-a-number (i.e., the result of an invalid calculation).
 

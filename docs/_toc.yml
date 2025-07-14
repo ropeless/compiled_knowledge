@@ -19,3 +19,7 @@ parts:
     - file: 2_06_PGM_compilers_advanced
     - file: 2_07_circuit_compilers_advanced
     - file: 2_08_sampling
+  - caption: API
+    chapters:
+    - file: api/modules
+    - file: api_index

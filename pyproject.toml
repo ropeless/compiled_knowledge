@@ -36,6 +36,7 @@ setuptools = "*"
 build = "*"
 cibuildwheel = "*"
 jupyter-book = "*"
+sphinx = "*"
 twine = "*"
 toml = "*"
 

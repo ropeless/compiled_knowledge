@@ -19,16 +19,18 @@ State: TypeAlias = Union[int, str, bool, float, None]
 The type for a possible state of a random variable.
 """
 
-Instance: TypeAlias = Sequence[int]
+Instance: TypeAlias = Tuple[int, ...]
 """
-An instance (of a sequence of random variables) is a sequence of integers
+An instance (of a sequence of random variables) is a tuple of integers
 that are state indexes, co-indexed with a known sequence of random variables.
 """
 
-Key: TypeAlias = Union[Instance, int]
+Key: TypeAlias = Union[Sequence[int], int]
 """
-A key identifies an instance, either as an instance itself or a
-single integer, representing an instance with one dimension.
+A key identifies an instance, either as a sequence of integers or a
+single integer. The integers are state indexes, co-indexed with a known
+sequence of random variables. A single integer represents an instance with
+one dimension.
 """
 
 Shape: TypeAlias = Sequence[int]
@@ -1871,7 +1873,7 @@ class PotentialFunction(ABC):
             a hypothetical parameter index assuming that every valid key has a unique parameter
             as per DensePotentialFunction.
         """
-        return _natural_key_idx(self._shape, key)
+        return natural_key_idx(self._shape, key)
 
     def param_id(self, param_idx: int) -> ParamId:
         """
@@ -2029,7 +2031,7 @@ class ZeroPotentialFunction(PotentialFunction):
         return 0
 
     def param_idx(self, key: Key) -> int:
-        return _natural_key_idx(self._shape, key)
+        return natural_key_idx(self._shape, key)
 
     def is_cpt(self, tolerance=DEFAULT_CPT_TOLERANCE) -> bool:
         return True
@@ -3364,26 +3366,7 @@ def rv_instances_as_indicators(*rvs: RandomVariable, flip: bool = False) -> Iter
     return _combos(rvs, flip=not flip)
 
 
-def _key_to_instance(key: Key) -> Instance:
-    """
-    Convert a key to an instance.
-
-    Args:
-        key: a key into a state space.
-
-    Returns:
-        A instance from the state space, as a tuple of state indexes, co-indexed with the given shape.
-
-    Assumes:
-        The key is valid for the implied state space.
-    """
-    if isinstance(key, int):
-        return (key,)
-    else:
-        return tuple(key)
-
-
-def _natural_key_idx(shape: Shape, key: Key) -> int:
+def natural_key_idx(shape: Shape, key: Key) -> int:
     """
     What is the natural index of the given key, assuming the given shape.
 
@@ -3407,6 +3390,25 @@ def _natural_key_idx(shape: Shape, key: Key) -> int:
     for s, i in zip(shape[1:], instance[1:]):
         result = result * s + i
     return result
+
+
+def _key_to_instance(key: Key) -> Instance:
+    """
+    Convert a key to an instance.
+
+    Args:
+        key: a key into a state space.
+
+    Returns:
+        A instance from the state space, as a tuple of state indexes, co-indexed with the given shape.
+
+    Assumes:
+        The key is valid for the implied state space.
+    """
+    if isinstance(key, int):
+        return (key,)
+    else:
+        return tuple(key)
 
 
 def _zero_space(shape: Shape) -> int:

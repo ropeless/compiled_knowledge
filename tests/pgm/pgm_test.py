@@ -3,7 +3,7 @@ from itertools import count
 from unittest import TestCase
 
 from ck.example import Stress
-from ck.pgm import PGM, ZeroPotentialFunction, default_pgm_name, Indicator, RVMap
+from ck.pgm import PGM, ZeroPotentialFunction, default_pgm_name, Indicator, RVMap, natural_key_idx
 from tests.helpers.unittest_fixture import Fixture, test_main
 
 
@@ -346,7 +346,7 @@ class TestPGM(PGMFixture):
         pgm.new_rv('b', 3)
         pgm.new_rv('c', 3)
 
-        it = pgm.instances()
+        it = iter(pgm.instances())
 
         self.assertArrayEqual(next(it), [0, 0, 0])
         self.assertArrayEqual(next(it), [0, 0, 1])
@@ -1790,10 +1790,10 @@ class TestRendering(TestCase):
         A = pgm.new_rv('A', ['zero', 'one', 'two', 'three'])
         B = pgm.new_rv('B', 2)
 
-        rendered = pgm.instance_str([1, 0])
+        rendered = pgm.instance_str((1, 0))
         self.assertEqual(rendered, 'A=one, B=0')
 
-        rendered = pgm.instance_str([1, 0], rvs=[B, A])
+        rendered = pgm.instance_str((1, 0), rvs=[B, A])
         self.assertEqual(rendered, 'B=1, A=zero')
 
     def test_condition_str(self):
@@ -1824,6 +1824,22 @@ class TestRendering(TestCase):
 
         rendered = pgm.condition_str(B[0], A[1])
         self.assertEqual(rendered, 'A=one, B=0')
+
+
+class TestFunctions(PGMFixture):
+
+    def test_natural_key_idx__1_var(self):
+        self.assertEqual(natural_key_idx((3,), (0,)), 0)
+        self.assertEqual(natural_key_idx((3,), (1,)), 1)
+        self.assertEqual(natural_key_idx((3,), (2,)), 2)
+
+    def test_natural_key_idx__2_var(self):
+        self.assertEqual(natural_key_idx((2, 3), (0, 0)), 0)
+        self.assertEqual(natural_key_idx((2, 3), (0, 1)), 1)
+        self.assertEqual(natural_key_idx((2, 3), (0, 2)), 2)
+        self.assertEqual(natural_key_idx((2, 3), (1, 0)), 3)
+        self.assertEqual(natural_key_idx((2, 3), (1, 1)), 4)
+        self.assertEqual(natural_key_idx((2, 3), (1, 2)), 5)
 
 
 if __name__ == '__main__':

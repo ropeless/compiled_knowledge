@@ -19,6 +19,8 @@ parts:
     - file: 2_06_PGM_compilers_advanced
     - file: 2_07_circuit_compilers_advanced
     - file: 2_08_sampling
+    - file: 2_09_datasets
+    - file: 2_10_machine_learning
   - caption: API
     chapters:
     - file: api/modules

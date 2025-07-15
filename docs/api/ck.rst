@@ -9,8 +9,10 @@ Subpackages
 
    ck.circuit
    ck.circuit_compiler
+   ck.dataset
    ck.example
    ck.in_out
+   ck.learning
    ck.pgm_circuit
    ck.pgm_compiler
    ck.probability

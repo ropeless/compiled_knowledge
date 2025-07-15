@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import ctypes as ct
 from dataclasses import dataclass
-from typing import Sequence, Optional, Dict, List, Tuple, Callable
+from typing import Sequence, Optional, Dict, List, Tuple, Callable, assert_never
 
 import numpy as np
 
@@ -174,7 +174,7 @@ def _make_instructions(
         elif op_node.symbol == ADD:
             operation = sum
         else:
-            assert False, 'symbol not understood'
+            assert_never('not reached')
 
         instructions.append(_Instruction(operation, args, dest))
 

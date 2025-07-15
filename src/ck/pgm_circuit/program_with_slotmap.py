@@ -1,6 +1,8 @@
-from typing import Tuple, Sequence, Dict, Iterable
+from typing import Tuple, Sequence, Dict
 
-from ck.pgm import RandomVariable, rv_instances, Instance, rv_instances_as_indicators, Indicator, ParamId
+import numpy as np
+
+from ck.pgm import RandomVariable, Indicator, ParamId
 from ck.pgm_circuit.slot_map import SlotMap, SlotKey
 from ck.probability.probability_space import Condition, check_condition
 from ck.program.program_buffer import ProgramBuffer
@@ -69,40 +71,6 @@ class ProgramWithSlotmap:
     def slot_map(self) -> SlotMap:
         return self._slot_map
 
-    def instances(self, flip: bool = False) -> Iterable[Instance]:
-        """
-        Enumerate instances of the random variables.
-
-        Each instance is a tuples of state indexes, co-indexed with the given random variables.
-
-        The order is the natural index order (i.e., last random variable changing most quickly).
-
-        Args:
-            flip: if true, then first random variable changes most quickly.
-
-        Returns:
-            an iteration over tuples, each tuple holds state indexes
-            co-indexed with the given random variables.
-        """
-        return rv_instances(*self._rvs, flip=flip)
-
-    def instances_as_indicators(self, flip: bool = False) -> Iterable[Sequence[Indicator]]:
-        """
-        Enumerate instances of the random variables.
-
-        Each instance is a tuples of indicators, co-indexed with the given random variables.
-
-        The order is the natural index order (i.e., last random variable changing most quickly).
-
-        Args:
-            flip: if true, then first random variable changes most quickly.
-
-        Returns:
-            an iteration over tuples, each tuples holds random variable indicators
-            co-indexed with the given random variables.
-        """
-        return rv_instances_as_indicators(*self._rvs, flip=flip)
-
     def compute(self) -> NDArrayNumeric:
         """
         Execute the program to compute and return the result. As per `ProgramBuffer.compute`.
@@ -146,29 +114,36 @@ class ProgramWithSlotmap:
         """
         return self._program_buffer.vars
 
-    def __setitem__(self, item: int | slice | SlotKey | Iterable[SlotKey], value: float) -> None:
+    def __setitem__(self, item: int | slice | SlotKey | RandomVariable, value: float) -> None:
         """
-        Set one or more input slot values, identified by slot keys.
+        Set input slot value/s.
         """
         if isinstance(item, (int, slice)):
             self._program_buffer[item] = value
         elif isinstance(item, (Indicator, ParamId)):
             self._program_buffer[self._slot_map[item]] = value
+        elif isinstance(item, RandomVariable):
+            for ind in item:
+                self._program_buffer[self._slot_map[ind]] = value
         else:
-            # Assume its iterable
-            for i in item:
-                self[i] = value
+            raise IndexError(f'unknown index type: {type(item)}')
 
-    def __getitem__(self, item: int | slice | SlotKey) -> NDArrayNumeric:
+    def __getitem__(self, item: int | slice | SlotKey | RandomVariable) -> NDArrayNumeric:
         """
-        Get an input slot value, identified by a slot key.
+        Get input slot value/s.
         """
         if isinstance(item, (int, slice)):
             return self._program_buffer[item]
         elif isinstance(item, (Indicator, ParamId)):
             return self._program_buffer[self._slot_map[item]]
+        elif isinstance(item, RandomVariable):
+            return np.fromiter(
+                (self._program_buffer[self._slot_map[ind]] for ind in item),
+                dtype=self._program_buffer.dtype,
+                count=len(item)
+            )
         else:
-            raise IndexError('unknown index type')
+            raise IndexError(f'unknown index type: {type(item)}')
 
     def set_condition(self, *condition: Condition) -> None:
         """
@@ -211,7 +186,10 @@ class ProgramWithSlotmap:
 
         Args:
             rv: a random variable whose indicators are in the slot map.
-            values: list of values, assumes len(values) == len(rv).
+            values: list of values
+
+        Assumes:
+            len(values) == len(rv).
         """
         for i in range(len(rv)):
             self[rv[i]] = values[i]

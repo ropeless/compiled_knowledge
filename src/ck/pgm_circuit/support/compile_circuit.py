@@ -30,11 +30,9 @@ def compile_results(
         a compiled RawProgram.
     """
     circuit: Circuit = pgm_circuit.circuit_top.circuit
-    if const_parameters:
-        parameter_values = pgm_circuit.parameter_values
-        number_of_indicators = pgm_circuit.number_of_indicators
+    if const_parameters and len(pgm_circuit.parameter_values) > 0:
         with TmpConst(circuit) as tmp:
-            for slot, value in enumerate(parameter_values, start=number_of_indicators):
+            for slot, value in enumerate(pgm_circuit.parameter_values, start=pgm_circuit.number_of_indicators):
                 tmp.set_const(slot, value)
             raw_program: RawProgram = compiler(*results, circuit=circuit)
     else:

@@ -11,6 +11,7 @@ class EmpiricalProbabilitySpace(ProbabilitySpace):
         Note that this is not necessarily an efficient approach to calculating probabilities and statistics.
 
         This probability space treats each of the samples as equally weighted.
+        For a probability space over unequally weighted samples, consider using `CrossTableProbabilitySpace`.
 
         Assumes:
             len(sample) == len(rvs), for each sample in samples.

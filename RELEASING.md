@@ -1,8 +1,24 @@
-Release Process
-===============
+Release Processes
+=================
 
-Prepare for the release
------------------------
+Version Identification
+----------------------
+
+Compiled Knowledge version identification conforms to [PEP 440](https://peps.python.org/pep-0440/)
+with MAJOR.MINOR.PATCH [semantic versioning](https://semver.org/). 
+
+Here are some example version identifiers that conform:
+* `4.5.6` a stable release,
+* `4.5.6a78` a prerelease.
+
+Versions will be tagged in the repository using the version identifier as the label, prepended with "v".
+
+Here are the repository tags corresponding to the version identifiers above:
+* `v4.5.6`,
+* `v4.5.6a78`.
+
+Prepare for a Release
+---------------------
 
 1. Check out the "main" branch.
 2. Merge any new features and fixes for the release.
@@ -15,30 +31,29 @@ Prepare for the release
 
 Only proceed if the "main" branch is ready for release.
 
-Perform the release - GitHub action
------------------------------------
+Perform a Release - GitHub Action
+---------------------------------
 
-1. Commit and push the "main" branch.
+1. Commit, tag and push the "main" branch.
    This will automatically release the documentation.
 2. Go to the project [GitHub Actions, Upload Python Package](https://github.com/ropeless/compiled_knowledge/actions/workflows/python-publish.yml).
 3. Select "Run workflow".
 
-Perform the release - manual
-----------------------------
+Perform a Release - Manual Action
+---------------------------------
 
 This manual release process will only upload wheels for the platform that
 these commands are run on. 
 
-1. Commit and push the "main" branch.
+1. Commit, tag and push the "main" branch.
    This will automatically release the documentation.
 2. Ensure you are on an up-to-date checkout of the "main" branch.
 3. Delete any existing project `dist` directory.
-4. Build the source distribution using: `python setup.py sdist`.
-5. Build the binary distribution using: `cibuildwheel --output-dir dist`.
+4. Build a source distribution using: `python setup.py sdist`.
+5. Build a binary distribution using: `cibuildwheel --output-dir dist`.
 6. Upload the package to PyPI using: `python -m twine upload dist/*`.
 
-
-Post-release checks
+Post-release Checks
 -------------------
 
 1. Check the online version of the documentation:  https://compiled-knowledge.readthedocs.io/.
@@ -46,8 +61,8 @@ Post-release checks
 3. Open a CK client test project. Update the dependencies (e.g., `poetry update`).
    Ensure CK upgraded and that the test project works as expected.
 
-Actions for a broken release
-============================
+Actions for a Broken Release
+----------------------------
 
 If the post-release checks fail:
 

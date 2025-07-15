@@ -26,7 +26,7 @@ are considered.
   - Is code well-designed, clear and efficient?
   - Are there adequate unit tests covering code?
   - Is code documentation clear, stating the semantics, intent and limitations of the code?
-  - Are there spelling mistakes or poor use of English?
+  - Is language used well, without spelling mistakes or poor English?
   - Is the request respectful and free of offensive material?
 
 ## Design Principles and Conventions

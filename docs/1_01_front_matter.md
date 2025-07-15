@@ -1,9 +1,9 @@
 # _front matter_
 
-Compiled Knowledge version 4.0.0, built 2025-07-15 13:27:40 (AUS Eastern Standard Time).
+Compiled Knowledge version 4.1.0a1, built 2025-07-15 13:53:49 (AUS Eastern Standard Time).
+A pre-release version of 4.1.0 that includes dataset and machine learning functionality for community feedback.
 
-
-These Jupyter notebooks form a reference for the software known as Compiled Knowledge, abbreviated as CK.
+These pages form a reference for the software known as Compiled Knowledge, abbreviated as CK.
 
 They are intended for users and developers of the software to help orient them
 to key design points and functionality of the software.

@@ -3,7 +3,7 @@
 Compiled Knowledge version {version}, built {date}.
 {version_note}
 
-These Jupyter notebooks form a reference for the software known as Compiled Knowledge, abbreviated as CK.
+These pages form a reference for the software known as Compiled Knowledge, abbreviated as CK.
 
 They are intended for users and developers of the software to help orient them
 to key design points and functionality of the software.

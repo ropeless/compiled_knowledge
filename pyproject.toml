@@ -1,6 +1,6 @@
 [project]
 name = "compiled-knowledge"
-version = "4.0.0"
+version = "4.1.0a1"
 description = "A Python package for compiling and querying discrete probabilistic graphical models."
 readme = "README.md"
 license = "MIT"
@@ -19,7 +19,7 @@ classifiers = [
 ]
 
 [doc_extra]
-version_note = ""
+version_note = "A pre-release version of 4.1.0 that includes dataset and machine learning functionality for community feedback."
 
 
 [project.urls]

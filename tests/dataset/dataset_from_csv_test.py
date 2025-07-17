@@ -8,7 +8,7 @@ from ck.utils.tmp_dir import tmp_dir
 from tests.helpers.unittest_fixture import Fixture, test_main
 
 
-class TestHardDataset(Fixture):
+class TestHardDatasetFromCSV(Fixture):
 
     def test_empty(self):
         pgm: PGM = PGM()
@@ -46,9 +46,9 @@ class TestHardDataset(Fixture):
 
         self.assertEqual(dataset.rvs, pgm.rvs)
         self.assertEqual(len(dataset), 2)
-        self.assertArrayEqual(dataset.states(x), [1, 0])
-        self.assertArrayEqual(dataset.states(y), [2, 1])
-        self.assertArrayEqual(dataset.states(z), [3, 2])
+        self.assertArrayEqual(dataset.state_idxs(x), [1, 0])
+        self.assertArrayEqual(dataset.state_idxs(y), [2, 1])
+        self.assertArrayEqual(dataset.state_idxs(z), [3, 2])
 
     def test_exact_header(self):
         pgm: PGM = PGM()
@@ -65,9 +65,47 @@ class TestHardDataset(Fixture):
 
         self.assertEqual(dataset.rvs, pgm.rvs)
         self.assertEqual(len(dataset), 2)
-        self.assertArrayEqual(dataset.states(x), [1, 0])
-        self.assertArrayEqual(dataset.states(y), [2, 1])
-        self.assertArrayEqual(dataset.states(z), [3, 2])
+        self.assertArrayEqual(dataset.state_idxs(x), [1, 0])
+        self.assertArrayEqual(dataset.state_idxs(y), [2, 1])
+        self.assertArrayEqual(dataset.state_idxs(z), [3, 2])
+
+    def test_other_separator(self):
+        pgm: PGM = PGM()
+        x = pgm.new_rv('x', 2)
+        y = pgm.new_rv('y', 3)
+        z = pgm.new_rv('z', 4)
+
+        lines: List[str] = [
+            'x -- y -- z',
+            '1 -- 2 -- 3',
+            '0 -- 1 -- 2',
+        ]
+        dataset: HardDataset = hard_dataset_from_csv(pgm.rvs, lines, sep='--')
+
+        self.assertEqual(dataset.rvs, pgm.rvs)
+        self.assertEqual(len(dataset), 2)
+        self.assertArrayEqual(dataset.state_idxs(x), [1, 0])
+        self.assertArrayEqual(dataset.state_idxs(y), [2, 1])
+        self.assertArrayEqual(dataset.state_idxs(z), [3, 2])
+
+    def test_blank_separator(self):
+        pgm: PGM = PGM()
+        x = pgm.new_rv('x', 2)
+        y = pgm.new_rv('y', 3)
+        z = pgm.new_rv('z', 4)
+
+        lines: List[str] = [
+            'x  y  z',
+            '1  2  3',
+            '0  1  2',
+        ]
+        dataset: HardDataset = hard_dataset_from_csv(pgm.rvs, lines, sep=None)
+
+        self.assertEqual(dataset.rvs, pgm.rvs)
+        self.assertEqual(len(dataset), 2)
+        self.assertArrayEqual(dataset.state_idxs(x), [1, 0])
+        self.assertArrayEqual(dataset.state_idxs(y), [2, 1])
+        self.assertArrayEqual(dataset.state_idxs(z), [3, 2])
 
     def test_useful_header(self):
         pgm: PGM = PGM()
@@ -84,9 +122,9 @@ class TestHardDataset(Fixture):
 
         self.assertEqual(dataset.rvs, pgm.rvs)
         self.assertEqual(len(dataset), 2)
-        self.assertArrayEqual(dataset.states(x), [1, 0])
-        self.assertArrayEqual(dataset.states(y), [2, 1])
-        self.assertArrayEqual(dataset.states(z), [3, 2])
+        self.assertArrayEqual(dataset.state_idxs(x), [1, 0])
+        self.assertArrayEqual(dataset.state_idxs(y), [2, 1])
+        self.assertArrayEqual(dataset.state_idxs(z), [3, 2])
 
     def test_weights_by_column_number(self):
         pgm: PGM = PGM()
@@ -102,9 +140,9 @@ class TestHardDataset(Fixture):
 
         self.assertEqual(dataset.rvs, pgm.rvs)
         self.assertEqual(len(dataset), 2)
-        self.assertArrayEqual(dataset.states(x), [1, 0])
-        self.assertArrayEqual(dataset.states(y), [2, 1])
-        self.assertArrayEqual(dataset.states(z), [3, 2])
+        self.assertArrayEqual(dataset.state_idxs(x), [1, 0])
+        self.assertArrayEqual(dataset.state_idxs(y), [2, 1])
+        self.assertArrayEqual(dataset.state_idxs(z), [3, 2])
         self.assertArrayEqual(dataset.weights, [2.3, 4.5])
 
     def test_weights_by_column_negative_number(self):
@@ -121,9 +159,9 @@ class TestHardDataset(Fixture):
 
         self.assertEqual(dataset.rvs, pgm.rvs)
         self.assertEqual(len(dataset), 2)
-        self.assertArrayEqual(dataset.states(x), [1, 0])
-        self.assertArrayEqual(dataset.states(y), [2, 1])
-        self.assertArrayEqual(dataset.states(z), [3, 2])
+        self.assertArrayEqual(dataset.state_idxs(x), [1, 0])
+        self.assertArrayEqual(dataset.state_idxs(y), [2, 1])
+        self.assertArrayEqual(dataset.state_idxs(z), [3, 2])
         self.assertArrayEqual(dataset.weights, [2.3, 4.5])
 
     def test_weights_by_column_name(self):
@@ -141,9 +179,9 @@ class TestHardDataset(Fixture):
 
         self.assertEqual(dataset.rvs, pgm.rvs)
         self.assertEqual(len(dataset), 2)
-        self.assertArrayEqual(dataset.states(x), [1, 0])
-        self.assertArrayEqual(dataset.states(y), [2, 1])
-        self.assertArrayEqual(dataset.states(z), [3, 2])
+        self.assertArrayEqual(dataset.state_idxs(x), [1, 0])
+        self.assertArrayEqual(dataset.state_idxs(y), [2, 1])
+        self.assertArrayEqual(dataset.state_idxs(z), [3, 2])
         self.assertArrayEqual(dataset.weights, [2.3, 4.5])
 
     def test_missing_column(self):
@@ -174,9 +212,9 @@ class TestHardDataset(Fixture):
 
         self.assertEqual(dataset.rvs, pgm.rvs)
         self.assertEqual(len(dataset), 2)
-        self.assertArrayEqual(dataset.states(x), [1, 0])
-        self.assertArrayEqual(dataset.states(y), [2, 1])
-        self.assertArrayEqual(dataset.states(z), [3, 2])
+        self.assertArrayEqual(dataset.state_idxs(x), [1, 0])
+        self.assertArrayEqual(dataset.state_idxs(y), [2, 1])
+        self.assertArrayEqual(dataset.state_idxs(z), [3, 2])
 
     def test_no_comments_fail(self):
         pgm: PGM = PGM()
@@ -206,9 +244,9 @@ class TestHardDataset(Fixture):
 
         self.assertEqual(dataset.rvs, pgm.rvs)
         self.assertEqual(len(dataset), 2)
-        self.assertArrayEqual(dataset.states(x), [1, 0])
-        self.assertArrayEqual(dataset.states(y), [2, 1])
-        self.assertArrayEqual(dataset.states(z), [3, 2])
+        self.assertArrayEqual(dataset.state_idxs(x), [1, 0])
+        self.assertArrayEqual(dataset.state_idxs(y), [2, 1])
+        self.assertArrayEqual(dataset.state_idxs(z), [3, 2])
 
     def test_with_splitlines(self):
         pgm: PGM = PGM()
@@ -224,9 +262,9 @@ class TestHardDataset(Fixture):
 
         self.assertEqual(dataset.rvs, pgm.rvs)
         self.assertEqual(len(dataset), 2)
-        self.assertArrayEqual(dataset.states(x), [1, 0])
-        self.assertArrayEqual(dataset.states(y), [2, 1])
-        self.assertArrayEqual(dataset.states(z), [3, 2])
+        self.assertArrayEqual(dataset.state_idxs(x), [1, 0])
+        self.assertArrayEqual(dataset.state_idxs(y), [2, 1])
+        self.assertArrayEqual(dataset.state_idxs(z), [3, 2])
 
     def test_with_string_io(self):
         pgm: PGM = PGM()
@@ -242,9 +280,9 @@ class TestHardDataset(Fixture):
 
         self.assertEqual(dataset.rvs, pgm.rvs)
         self.assertEqual(len(dataset), 2)
-        self.assertArrayEqual(dataset.states(x), [1, 0])
-        self.assertArrayEqual(dataset.states(y), [2, 1])
-        self.assertArrayEqual(dataset.states(z), [3, 2])
+        self.assertArrayEqual(dataset.state_idxs(x), [1, 0])
+        self.assertArrayEqual(dataset.state_idxs(y), [2, 1])
+        self.assertArrayEqual(dataset.state_idxs(z), [3, 2])
 
     def test_with_file_io(self):
         pgm: PGM = PGM()
@@ -263,9 +301,9 @@ class TestHardDataset(Fixture):
 
         self.assertEqual(dataset.rvs, pgm.rvs)
         self.assertEqual(len(dataset), 2)
-        self.assertArrayEqual(dataset.states(x), [1, 0])
-        self.assertArrayEqual(dataset.states(y), [2, 1])
-        self.assertArrayEqual(dataset.states(z), [3, 2])
+        self.assertArrayEqual(dataset.state_idxs(x), [1, 0])
+        self.assertArrayEqual(dataset.state_idxs(y), [2, 1])
+        self.assertArrayEqual(dataset.state_idxs(z), [3, 2])
 
 
 if __name__ == '__main__':

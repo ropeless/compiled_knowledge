@@ -80,8 +80,8 @@ class TestHardDataset(Fixture):
         dataset.remove_rv(y)
 
         self.assertEqual(dataset.rvs, (x, z))
-        self.assertArrayEqual(dataset.states(x), [0, 0, 1, 1, 0])
-        self.assertArrayEqual(dataset.states(z), [1, 1, 0, 1, 1])
+        self.assertArrayEqual(dataset.state_idxs(x), [0, 0, 1, 1, 0])
+        self.assertArrayEqual(dataset.state_idxs(z), [1, 1, 0, 1, 1])
 
     def test_add_rv_from_state_idxs(self):
         pgm = PGM()
@@ -94,7 +94,7 @@ class TestHardDataset(Fixture):
         self.assertEqual(len(dataset.rvs), 1)
         self.assertIs(dataset.rvs[0], x)
 
-        rv_data = dataset.states(x)
+        rv_data = dataset.state_idxs(x)
         self.assertArrayEqual(rv_data, [0, 0, 1, 1, 0])
 
         dataset.add_rv_from_state_idxs(y, [0, 2, 1, 1, 0])
@@ -102,7 +102,7 @@ class TestHardDataset(Fixture):
         self.assertIs(dataset.rvs[0], x)
         self.assertIs(dataset.rvs[1], y)
 
-        rv_data = dataset.states(y)
+        rv_data = dataset.state_idxs(y)
         self.assertArrayEqual(rv_data, [0, 2, 1, 1, 0])
 
     def test_add_rv_from_states(self):
@@ -116,7 +116,7 @@ class TestHardDataset(Fixture):
         self.assertEqual(len(dataset.rvs), 1)
         self.assertIs(dataset.rvs[0], x)
 
-        rv_data = dataset.states(x)
+        rv_data = dataset.state_idxs(x)
         self.assertArrayEqual(rv_data, [0, 0, 1, 1, 0])
 
         dataset.add_rv_from_states(y, ['yes', 'maybe', 'no', 'no', 'yes'])
@@ -124,7 +124,7 @@ class TestHardDataset(Fixture):
         self.assertIs(dataset.rvs[0], x)
         self.assertIs(dataset.rvs[1], y)
 
-        rv_data = dataset.states(y)
+        rv_data = dataset.state_idxs(y)
         self.assertArrayEqual(rv_data, [0, 2, 1, 1, 0])
 
     def test_add_rv_from_state_weights(self):
@@ -148,7 +148,7 @@ class TestHardDataset(Fixture):
         self.assertEqual(len(dataset.rvs), 1)
         self.assertIs(dataset.rvs[0], x)
 
-        rv_data = dataset.states(x)
+        rv_data = dataset.state_idxs(x)
         self.assertArrayEqual(rv_data, [0, 0, 1, 1, 0])
         self.assertArrayAlmostEqual(dataset.weights, [1, 1, 1, 1, 1])
 
@@ -167,7 +167,7 @@ class TestHardDataset(Fixture):
         self.assertIs(dataset.rvs[1], y)
         self.assertArrayAlmostEqual(dataset.weights, [1, 1, 1, 1, 1])
 
-        rv_data = dataset.states(y)
+        rv_data = dataset.state_idxs(y)
         self.assertArrayEqual(rv_data, [0, 2, 1, 1, 0])
 
     def test_add_rv_from_state_weights_unnormalised_adjusted(self):
@@ -191,7 +191,7 @@ class TestHardDataset(Fixture):
         self.assertEqual(len(dataset.rvs), 1)
         self.assertIs(dataset.rvs[0], x)
 
-        rv_data = dataset.states(x)
+        rv_data = dataset.state_idxs(x)
         self.assertArrayEqual(rv_data, [0, 0, 1, 1, 0])
         self.assertArrayAlmostEqual(dataset.weights, [1, 1, 1, 1, 0.5])
 
@@ -210,7 +210,7 @@ class TestHardDataset(Fixture):
         self.assertIs(dataset.rvs[1], y)
         self.assertArrayAlmostEqual(dataset.weights, [1, 0, 1, 10, 0.5])
 
-        rv_data = dataset.states(y)
+        rv_data = dataset.state_idxs(y)
         self.assertArrayEqual(rv_data, [0, 0, 1, 1, 0])
 
     def test_add_rv_from_state_weights_unnormalised_unadjusted(self):
@@ -235,7 +235,7 @@ class TestHardDataset(Fixture):
         self.assertEqual(len(dataset.rvs), 1)
         self.assertIs(dataset.rvs[0], x)
 
-        rv_data = dataset.states(x)
+        rv_data = dataset.state_idxs(x)
         self.assertArrayEqual(rv_data, [0, 0, 1, 1, 0])
         self.assertArrayEqual(dataset.weights, [1, 1, 1, 1, 1])
 
@@ -255,7 +255,7 @@ class TestHardDataset(Fixture):
         self.assertIs(dataset.rvs[1], y)
         self.assertArrayEqual(dataset.weights, [1, 1, 1, 1, 1])
 
-        rv_data = dataset.states(y)
+        rv_data = dataset.state_idxs(y)
         self.assertArrayEqual(rv_data, [0, 0, 1, 1, 0])
 
     def test_from_soft_dataset(self):
@@ -287,10 +287,10 @@ class TestHardDataset(Fixture):
 
         self.assertArrayAlmostEqual(dataset.weights, [1, 1, 1, 1, 1])
 
-        rv_data = dataset.states(x)
+        rv_data = dataset.state_idxs(x)
         self.assertArrayEqual(rv_data, [0, 0, 1, 1, 0])
 
-        rv_data = dataset.states(y)
+        rv_data = dataset.state_idxs(y)
         self.assertArrayEqual(rv_data, [0, 2, 1, 1, 0])
 
     def test_from_soft_dataset_unnormalised(self):
@@ -322,10 +322,10 @@ class TestHardDataset(Fixture):
 
         self.assertArrayAlmostEqual(dataset.weights, [1, 0, 1, 10, 0.5])
 
-        rv_data = dataset.states(x)
+        rv_data = dataset.state_idxs(x)
         self.assertArrayEqual(rv_data, [0, 0, 1, 1, 0])
 
-        rv_data = dataset.states(y)
+        rv_data = dataset.state_idxs(y)
         self.assertArrayEqual(rv_data, [0, 0, 1, 1, 0])
 
     def test_bad_weights(self):
@@ -430,6 +430,45 @@ class TestSoftDataset(Fixture):
         self.assertEqual(dataset.rvs, (x, y))
         self.assertEqual(rv_data.shape, (5, len(y)))
         self.assertTrue(np.all(rv_data == 0))
+
+    def test_construct_from_ndarray(self):
+        pgm = PGM()
+        x = pgm.new_rv('x', (True, False))
+        y = pgm.new_rv('y', ('yes', 'no', 'maybe'))
+        z = pgm.new_rv('z', ('1', '2'))
+
+        x_data: NDArray = np.array([[0.6, 0.4], [1.0, 0.0]])
+        y_data: NDArray = np.array([[0.6, 0.3, 0.1], [0.0, 0.0, 1.0]])
+        z_data: NDArray = np.array([[0.6, 0.4], [1.0, 0.0]])
+        dataset = SoftDataset([
+            (x, x_data),
+            (y, y_data),
+            (z, z_data),
+        ])
+
+        self.assertEqual(dataset.rvs, (x, y, z))
+
+        self.assertIs(dataset.state_weights(x), x_data)
+        self.assertIs(dataset.state_weights(y), y_data)
+        self.assertIs(dataset.state_weights(z), z_data)
+
+    def test_construct_from_list(self):
+        pgm = PGM()
+        x = pgm.new_rv('x', (True, False))
+        y = pgm.new_rv('y', ('yes', 'no', 'maybe'))
+        z = pgm.new_rv('z', ('1', '2'))
+
+        dataset = SoftDataset([
+            (x, [[0.6, 0.4], [1.0, 0.0]]),
+            (y, [[0.6, 0.3, 0.1], [0.0, 0.0, 1.0]]),
+            (z, [[0.6, 0.4], [1.0, 0.0]]),
+        ])
+
+        self.assertEqual(dataset.rvs, (x, y, z))
+
+        self.assertNDArrayEqual(dataset.state_weights(x), np.array([[0.6, 0.4], [1.0, 0.0]]))
+        self.assertNDArrayEqual(dataset.state_weights(y), np.array([[0.6, 0.3, 0.1], [0.0, 0.0, 1.0]]))
+        self.assertNDArrayEqual(dataset.state_weights(z), np.array([[0.6, 0.4], [1.0, 0.0]]))
 
     def test_remove_rv(self):
         pgm = PGM()

@@ -9,7 +9,7 @@ def hard_dataset_from_csv(
         lines: Iterable[str],
         *,
         weights: Optional[int | str] = None,
-        sep: str = ',',
+        sep: Optional[str] = ',',
         comment: str = '#',
 ) -> HardDataset:
     """
@@ -30,6 +30,8 @@ def hard_dataset_from_csv(
     of random variables. There must be a column name in the header to match
     each name of the given random variables. Additional columns will be ignored.
 
+    Leading and trailing whitespace is ignored for each field, including header column names.
+
     As text file (and StringIO) objects are iterable over lines, here is how to read a csv file:
     ```
         with open(csv_filename, 'r') as file:
@@ -46,6 +48,8 @@ def hard_dataset_from_csv(
         weights: the column in the csv file holding instance weights. Can be either the
             column number (counting from zero) or a column name (requires a header line).
         sep: the string to use to separate values in a line, default is a comma.
+            If set to `None`, lines will be split on any consecutive run of whitespace characters
+            (including \n \r \t \f and spaces).
         comment: text starting with this will be treated as a comment. Set to '' to disallow comments.
 
     Returns:

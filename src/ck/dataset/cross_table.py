@@ -66,7 +66,7 @@ class CrossTable(MutableMapping[Instance, float]):
 
     def __setitem__(self, key: Instance, value) -> None:
         if value == 0:
-            self._dict.pop(key, 0)
+            self._dict.pop(key)
         else:
             self._dict[key] = value
 
@@ -238,7 +238,7 @@ def cross_table_from_hard_dataset(
     weights: CrossTable = CrossTable(rvs, dirichlet_prior)
 
     columns: List[NDArray] = [
-        dataset.states(rv)
+        dataset.state_idxs(rv)
         for rv in rvs
     ]
 

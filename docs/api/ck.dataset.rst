@@ -28,6 +28,14 @@ ck.dataset.dataset module
    :undoc-members:
    :show-inheritance:
 
+ck.dataset.dataset\_builder module
+----------------------------------
+
+.. automodule:: ck.dataset.dataset_builder
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 ck.dataset.dataset\_compute module
 ----------------------------------
 

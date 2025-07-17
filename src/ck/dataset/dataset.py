@@ -5,7 +5,7 @@ from typing import Sequence, Optional, Dict, Iterable, Tuple
 import numpy as np
 
 from ck.pgm import RandomVariable, State
-from ck.utils.np_extras import NDArray, DTypeStates, dtype_for_number_of_states
+from ck.utils.np_extras import DTypeStates, dtype_for_number_of_states, NDArrayNumeric, NDArrayStates
 
 
 class Dataset:
@@ -17,7 +17,7 @@ class Dataset:
 
     def __init__(
             self,
-            weights: Optional[NDArray | Sequence],
+            weights: Optional[NDArrayNumeric | Sequence],
             length: Optional[int],
     ):
         # Infer the length of the dataset.
@@ -30,14 +30,16 @@ class Dataset:
         self._rvs: Tuple[RandomVariable, ...] = ()
 
         # Set the weights array, and confirm its shape
-        self._weights: NDArray
+        self._weights: NDArrayNumeric
         if weights is None:
             weights = np.ones(self._length)
         elif not isinstance(weights, np.ndarray):
-            weights = np.array(weights)
+            weights = np.array(weights, dtype=np.float64)
         expected_shape = (self._length,)
         if weights.shape != expected_shape:
             raise ValueError(f'weights expected shape {expected_shape}, got {weights.shape}')
+        # if not isinstance(weights.dtype, NDArrayNumeric):
+        #     raise ValueError(f'weights expected numeric dtype, got {weights.dtype}')
 
         self._weights = weights
 
@@ -55,7 +57,7 @@ class Dataset:
         return self._rvs
 
     @property
-    def weights(self) -> NDArray:
+    def weights(self) -> NDArrayNumeric:
         """
         Get the instance weights.
         The notional weight of an instance is 1.
@@ -84,7 +86,7 @@ class Dataset:
         """
         rvs = self._rvs
         i: int = self._rvs.index(rv)
-        self._rvs = rvs[:i] + rvs[i+1:]
+        self._rvs = rvs[:i] + rvs[i + 1:]
 
 
 class HardDataset(Dataset):
@@ -97,6 +99,7 @@ class HardDataset(Dataset):
     @staticmethod
     def from_soft_dataset(
             soft_dataset: SoftDataset,
+            *,
             adjust_instance_weights: bool = True,
     ) -> HardDataset:
         """
@@ -124,12 +127,16 @@ class HardDataset(Dataset):
 
     def __init__(
             self,
-            data: Iterable[Tuple[RandomVariable, NDArray | Sequence[int]]] = (),
-            weights: Optional[NDArray | Sequence] = None,
+            data: Iterable[Tuple[RandomVariable, NDArrayStates | Sequence[int]]] = (),
+            *,
+            weights: Optional[NDArrayNumeric | Sequence[float | int]] = None,
             length: Optional[int] = None,
     ):
         """
         Create a hard dataset.
+
+        When `weights` is a numpy array, then the dataset will directly reference the given array.
+        When `data` contains a numpy array, then the dataset will directly reference the given array.
 
         Args:
             data: optional iterable of (random variable, state idxs), passed
@@ -137,7 +144,7 @@ class HardDataset(Dataset):
             weights: optional array of instance weights.
             length: optional length of the dataset, if omitted, the length is inferred.
         """
-        self._data: Dict[RandomVariable, NDArray] = {}
+        self._data: Dict[RandomVariable, NDArrayStates] = {}
 
         # Initialise super by either weights, length or first data item.
         super_initialised: bool = False
@@ -154,9 +161,9 @@ class HardDataset(Dataset):
         if not super_initialised:
             super().__init__(weights, 0)
 
-    def states(self, rv: RandomVariable) -> NDArray:
+    def state_idxs(self, rv: RandomVariable) -> NDArrayStates:
         """
-        Get the state values (by state index) for one random variable.
+        Get the state indexes for one random variable.
         The index into the returned array is the instance index.
 
         Returns:
@@ -167,7 +174,7 @@ class HardDataset(Dataset):
         """
         return self._data[rv]
 
-    def add_rv(self, rv: RandomVariable) -> NDArray:
+    def add_rv(self, rv: RandomVariable) -> NDArrayStates:
         """
         Add a random variable to the dataset, allocating and returning
         the state indices for the random variable.
@@ -198,11 +205,11 @@ class HardDataset(Dataset):
         del self._data[rv]
         self._remove_rv(rv)
 
-    def add_rv_from_state_idxs(self, rv: RandomVariable, state_idxs: NDArray | Sequence[int]) -> NDArray:
+    def add_rv_from_state_idxs(self, rv: RandomVariable, state_idxs: NDArrayStates | Sequence[int]) -> NDArrayStates:
         """
         Add a random variable to the dataset.
 
-        The dataset will directly reference the given `states` array.
+        When `state_idxs` is a numpy array, then the dataset will directly reference the given array.
 
         Args:
             rv: The random variable to add.
@@ -234,7 +241,7 @@ class HardDataset(Dataset):
         self._add_rv(rv)
         return rv_data
 
-    def add_rv_from_states(self, rv: RandomVariable, states: Sequence[State]) -> NDArray:
+    def add_rv_from_states(self, rv: RandomVariable, states: Sequence[State]) -> NDArrayStates:
         """
         Add a random variable to the dataset.
 
@@ -266,9 +273,9 @@ class HardDataset(Dataset):
     def add_rv_from_state_weights(
             self,
             rv: RandomVariable,
-            state_weights: NDArray,
+            state_weights: NDArrayNumeric,
             adjust_instance_weights: bool = True,
-    ) -> NDArray:
+    ) -> NDArrayStates:
         """
         Add a random variable to the dataset.
 
@@ -306,7 +313,7 @@ class HardDataset(Dataset):
         )
 
         if adjust_instance_weights:
-            row: NDArray
+            row: NDArrayNumeric
             for i, row in enumerate(state_weights):
                 self._weights[i] *= row.sum()
 
@@ -320,13 +327,13 @@ class HardDataset(Dataset):
         Args:
             show_rvs: If `True`, the random variables are dumped.
             show_weights: If `True`, the instance weights are dumped.
-            as_states: If `True`, the states are dumped Instead of just state indexes.
+            as_states: If `True`, the states are dumped instead of just state indexes.
         """
         if show_rvs:
             rvs = ', '.join(str(rv) for rv in self.rvs)
             print(f'rvs: [{rvs}]')
         print(f'instances ({len(self)}, with total weight {self.total_weight()}):')
-        cols = [self.states(rv) for rv in self.rvs]
+        cols = [self.state_idxs(rv) for rv in self.rvs]
         for instance, weight in zip(zip(*cols), self.weights):
             if as_states:
                 instance_str = ', '.join(repr(rv.states[idx]) for idx, rv in zip(instance, self.rvs))
@@ -367,17 +374,21 @@ class SoftDataset(Dataset):
         """
         dataset = SoftDataset(weights=hard_dataset.weights.copy())
         for rv in hard_dataset.rvs:
-            dataset.add_rv_from_state_idxs(rv, hard_dataset.states(rv))
+            dataset.add_rv_from_state_idxs(rv, hard_dataset.state_idxs(rv))
         return dataset
 
     def __init__(
             self,
-            data: Iterable[Tuple[RandomVariable, NDArray]] = (),
-            weights: Optional[NDArray | Sequence] = None,
+            data: Iterable[Tuple[RandomVariable, NDArrayNumeric | Sequence[Sequence[float]]]] = (),
+            *,
+            weights: Optional[NDArrayNumeric | Sequence[float | int]] = None,
             length: Optional[int] = None,
     ):
         """
         Create a soft dataset.
+
+        When `weights` is a numpy array, then the dataset will directly reference the given array.
+        When `data` contains a numpy array, then the dataset will directly reference the given array.
 
         Args:
             data: optional iterable of (random variable, state weights), passed
@@ -385,7 +396,7 @@ class SoftDataset(Dataset):
             weights: optional array of instance weights.
             length: optional length of the dataset, if omitted, the length is inferred.
         """
-        self._data: Dict[RandomVariable, NDArray] = {}
+        self._data: Dict[RandomVariable, NDArrayNumeric] = {}
 
         # Initialise super by either weights, length or first data item.
         super_initialised: bool = False
@@ -423,10 +434,10 @@ class SoftDataset(Dataset):
             RuntimeError: if `check_negative_instance` is true and a negative
                 instance weight is encountered.
         """
-        state_weights: NDArray
+        state_weights: NDArrayNumeric
         i: int
 
-        weights: NDArray = self.weights
+        weights: NDArrayNumeric = self.weights
         for i in range(self._length):
             for state_weights in self._data.values():
                 weight_sum = state_weights[i].sum()
@@ -442,7 +453,7 @@ class SoftDataset(Dataset):
             elif check_negative_instance and instance_weight < 0:
                 raise RuntimeError(f'negative instance weight: {i}')
 
-    def state_weights(self, rv: RandomVariable) -> NDArray:
+    def state_weights(self, rv: RandomVariable) -> NDArrayNumeric:
         """
         Get the state weights for one random variable.
         The first index into the returned array is the instance index.
@@ -456,7 +467,7 @@ class SoftDataset(Dataset):
         """
         return self._data[rv]
 
-    def add_rv(self, rv: RandomVariable) -> NDArray:
+    def add_rv(self, rv: RandomVariable) -> NDArrayNumeric:
         """
         Add a random variable to the dataset, allocating and returning
         the state indices for the random variable.
@@ -487,11 +498,15 @@ class SoftDataset(Dataset):
         del self._data[rv]
         self._remove_rv(rv)
 
-    def add_rv_from_state_weights(self, rv: RandomVariable, state_weights: NDArray) -> NDArray:
+    def add_rv_from_state_weights(
+            self,
+            rv: RandomVariable,
+            state_weights: NDArrayNumeric | Sequence[Sequence[float]],
+    ) -> NDArrayNumeric:
         """
         Add a random variable to the dataset.
 
-        The dataset will directly reference the given `states` array.
+        When `state_weights` is a numpy array, then the dataset will directly reference the given array.
 
         Args:
             rv: The random variable to add.
@@ -503,6 +518,9 @@ class SoftDataset(Dataset):
         if rv in self._data.keys():
             raise ValueError(f'data for {rv} already exists in the dataset')
 
+        if not isinstance(state_weights, np.ndarray):
+            state_weights = np.array(state_weights, dtype=np.float64)
+
         expected_shape = (self._length, len(rv))
         if state_weights.shape == expected_shape:
             rv_data = state_weights
@@ -513,7 +531,7 @@ class SoftDataset(Dataset):
         self._add_rv(rv)
         return rv_data
 
-    def add_rv_from_state_idxs(self, rv: RandomVariable, state_idxs: NDArray | Sequence[int]) -> NDArray:
+    def add_rv_from_state_idxs(self, rv: RandomVariable, state_idxs: NDArrayStates | Sequence[int]) -> NDArrayNumeric:
         """
         Add a random variable to the dataset.
 
@@ -533,7 +551,7 @@ class SoftDataset(Dataset):
 
         return self.add_rv_from_state_weights(rv, rv_data)
 
-    def add_rv_from_states(self, rv: RandomVariable, states: Sequence[State]) -> NDArray:
+    def add_rv_from_states(self, rv: RandomVariable, states: Sequence[State]) -> NDArrayNumeric:
         """
         Add a random variable to the dataset.
 
@@ -558,7 +576,6 @@ class SoftDataset(Dataset):
     def dump(self, *, show_rvs: bool = True, show_weights: bool = True) -> None:
         """
         Dump the dataset in a human-readable format.
-        If as_states is true, then instance states are dumped instead of just state indexes.
 
         Args:
             show_rvs: If `True`, the random variables are dumped.

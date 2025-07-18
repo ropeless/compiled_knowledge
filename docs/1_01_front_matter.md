@@ -1,6 +1,6 @@
 # _front matter_
 
-Compiled Knowledge version 4.1.0a1, built 2025-07-18 10:24:04 (AUS Eastern Standard Time).
+Compiled Knowledge version 4.1.0a2, built 2025-07-18 10:50:28 (AUS Eastern Standard Time).
 A pre-release version of 4.1.0 that includes dataset and machine learning functionality for community feedback.
 
 These pages form a reference for the software known as Compiled Knowledge, abbreviated as CK.

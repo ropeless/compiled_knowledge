@@ -1,6 +1,6 @@
 from ck.dataset.cross_table import CrossTable
-from ck.dataset.cross_table_probabilities import CrossTableProbabilitySpace
 from ck.pgm import PGM
+from ck.probability.cross_table_probability_space import CrossTableProbabilitySpace
 from tests.helpers.unittest_fixture import Fixture, test_main
 
 

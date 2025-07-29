@@ -2,7 +2,7 @@ import random
 
 from ck import example
 from ck.pgm import PGM
-from ck.pgm_compiler import factor_elimination
+from ck.pgm_compiler import DEFAULT_PGM_COMPILER
 from ck.pgm_circuit import PGMCircuit
 from ck.pgm_circuit.wmc_program import WMCProgram
 from ck.probability.empirical_probability_space import EmpiricalProbabilitySpace
@@ -18,7 +18,7 @@ def main():
 
     pgm: PGM = example.Rain()
 
-    pgm_cct: PGMCircuit = factor_elimination.compile_pgm(pgm)
+    pgm_cct: PGMCircuit = DEFAULT_PGM_COMPILER(pgm)
     wmc = WMCProgram(pgm_cct)
     sampler = wmc.sample_direct()
 

@@ -291,6 +291,9 @@ class DatasetBuilder(Sequence[Record]):
         """
         Allocate and return a 1D numpy array of state indexes.
 
+        The state of a random variable (for an instance) where the value is soft evidence,
+        is the state with the maximum weight. Ties are broken arbitrarily.
+
         Args:
             rv: a random variable in this dataset.
             missing: the value to use in the result to represent missing values. If not provided,
@@ -381,7 +384,8 @@ class DatasetBuilder(Sequence[Record]):
             dataset: the dataset of records to append.
 
         Raises:
-            KeyError: if `dataset.rvs` is not a superset of `this.rvs`.
+            KeyError: if `dataset.rvs` is not a superset of `this.rvs` and ensure_cols is false.
+                If you want to avoid this error, first call `self.ensure_column(*dataset.rvs)`.
         """
         if isinstance(dataset, HardDataset):
             cols: Tuple = tuple(dataset.state_idxs(rv).tolist() for rv in self.rvs)
@@ -441,10 +445,13 @@ class DatasetBuilder(Sequence[Record]):
 def hard_dataset_from_builder(dataset_builder: DatasetBuilder, *, missing: Optional[int] = None) -> HardDataset:
     """
     Create a hard dataset from a soft dataset by repeated application
-    of `HardDataset.add_rv_from_state_idxs`.
+    of `HardDataset.add_rv_from_state_idxs` using values from `self.get_column_hard`.
 
-    The instance weights of the returned dataset will be a copy
-    of the instance weights of the soft dataset.
+    The state of a random variable (for an instance) where the value is soft evidence,
+    is the state with the maximum weight. Ties are broken arbitrarily.
+
+    The instance weights of the returned dataset will simply
+    be the weights from the builder.
 
     No adjustments are made to the resulting dataset weights, even if
     a value in the dataset builder is soft evidence that does not sum to

@@ -57,7 +57,7 @@ class TestCrossTable(Fixture):
         self.assertEqual(crosstab[(1, 1)], 2.0)
         self.assertEqual(crosstab[(1, 2)], 0.0)
 
-    def test_dirichlet_prior(self):
+    def test_dirichlet_prior_float(self):
         pgm = PGM()
         x = pgm.new_rv('x', (True, False))
         y = pgm.new_rv('y', ('yes', 'no', 'maybe'))
@@ -70,6 +70,26 @@ class TestCrossTable(Fixture):
 
         for instance in rv_instances(x, y):
             self.assertEqual(crosstab[tuple(instance)], 0.1)
+
+    def test_dirichlet_prior_cross_table(self):
+        pgm = PGM()
+        x = pgm.new_rv('x', (True, False))
+        y = pgm.new_rv('y', ('yes', 'no', 'maybe'))
+
+        prior = CrossTable(rvs=(y, x))  # Note the rvs are in reverse order!
+        prior[(0, 0)] = 1.0
+        prior[(0, 1)] = 2.0
+        prior[(2, 1)] = 3.0
+
+        crosstab: CrossTable = CrossTable(rvs=(x, y), dirichlet_prior=prior)
+
+        self.assertEqual(crosstab.rvs, (x, y))
+        self.assertEqual(len(crosstab), 3)
+        self.assertAlmostEqual(crosstab.total_weight(), 6.0)
+
+        self.assertEqual(crosstab[(0, 0)], 1.0)
+        self.assertEqual(crosstab[(1, 0)], 2.0)
+        self.assertEqual(crosstab[(1, 2)], 3.0)
 
     def test_update_and_dirichlet_prior_in_constructor(self):
         pgm = PGM()
@@ -109,6 +129,7 @@ class TestCrossTable(Fixture):
 
         crosstab[0, 0] = 1
         crosstab[0, 1] = 2
+        crosstab[0, 2] = 0  # should be ignored
         crosstab[1, 2] = 3
 
         self.assertEqual(len(crosstab), 3)

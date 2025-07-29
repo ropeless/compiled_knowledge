@@ -596,9 +596,11 @@ class PGM:
 
         # Factors form a DAG
         states: NDArrayUInt8 = np.zeros(self.number_of_factors, dtype=np.uint8)
-        for factor in self._factors:
-            if self._has_cycle(factor, child_to_factor, states):
-                return False
+        if any(
+            self._has_cycle(factor, child_to_factor, states)
+            for factor in self._factors
+        ):
+            return False
 
         # All tests passed
         return True
@@ -778,7 +780,7 @@ class PGM:
         next_prefix: str = prefix + indent
         next_next_prefix: str = next_prefix + indent
 
-        print(f'{prefix}PGM id={id(self)} name={self.name!r}')
+        print(f'{prefix}PGM id={id(self)}')
         self.dump_synopsis(prefix=next_prefix, precision=precision, max_state_digits=max_state_digits)
 
         print(f'{prefix}random variables ({self.number_of_rvs})')
@@ -792,16 +794,16 @@ class PGM:
 
         print(f'{prefix}factors ({self.number_of_factors})')
         for factor in self.factors:
-            rv_idxs = [rv.idx for rv in factor.rvs]
+            factor_rvs = ', '.join(repr(rv.name) for rv in factor.rvs)
             if factor.is_zero:
-                function_ref = '<zero>'
+                function_ref = '<ZeroPotentialFunction>'
             else:
                 function = factor.function
                 function_ref = f'{id(function)}: {function.__class__.__name__}'
 
-            print(f'{next_prefix}{factor.idx:>3} rvs={rv_idxs} function={function_ref}')
+            print(f'{next_prefix}{factor.idx:>3} rvs=({factor_rvs}) function={function_ref}')
 
-        print(f'{prefix}functions ({self.number_of_functions})')
+        print(f'{prefix}functions, excluding ZeroPotentialFunction ({sum(1 for _ in self.non_zero_functions)})')
         for function in sorted(self.non_zero_functions, key=lambda f: id(f)):
             print(f'{next_prefix}{id(function):>13}: {function.__class__.__name__}')
             function.dump(prefix=next_next_prefix, show_function_values=show_function_values, show_id_class=False)

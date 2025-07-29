@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import math
 from abc import ABC, abstractmethod
 from itertools import chain
@@ -203,16 +205,19 @@ class ProbabilitySpace(ABC):
                 loop_rvs.append([rv[i] for i in sorted(states)])
                 reduced_space = True
 
+        best_probability = float('-inf')
+        best_states = None
+
         # If the random variables we are looping over does not have any conditions
         # then it is expected to be faster by using computed marginal probabilities.
         if not reduced_space:
             prs = self.marginal_distribution(*rvs, condition=condition)
-            best_probability = float('-inf')
-            best_states = None
             for probability, inst in zip(prs, rv_instances(*rvs)):
                 if probability > best_probability:
                     best_probability = probability
                     best_states = inst
+            if best_states is None:
+                return _NAN, ()
             return best_probability, best_states
 
         else:
@@ -220,8 +225,6 @@ class ProbabilitySpace(ABC):
             new_conditions = tuple(ind for ind in condition if ind.rv_idx not in rv_indexes)
 
             # Loop over the state space of the 'loop' rvs
-            best_probability = float('-inf')
-            best_states = None
             indicators: Tuple[Indicator, ...]
             for indicators in _combos(loop_rvs):
                 probability = self.wmc(*(indicators + new_conditions))
@@ -229,6 +232,8 @@ class ProbabilitySpace(ABC):
                     best_probability = probability
                     best_states = tuple(ind.state_idx for ind in indicators)
             condition_probability = self.wmc(*condition)
+            if best_states is None:
+                return _NAN, ()
             return best_probability / condition_probability, best_states
 
     def correlation(self, indicator1: Indicator, indicator2: Indicator, condition: Condition = ()) -> float:
@@ -244,6 +249,20 @@ class ProbabilitySpace(ABC):
             correlation between the two given indicators.
         """
         condition = check_condition(condition)
+
+        if indicator1.rv_idx == indicator2.rv_idx:
+            # Special case - same random variable
+            condition_groups: MapSet[int, Indicator] = _group_indicators(condition)
+            rv_idx: int = indicator1.rv_idx
+            if indicator1 not in condition_groups.get(rv_idx, (indicator1,)):
+                return _NAN
+            if indicator1 == indicator2:
+                return 1
+            else:
+                if indicator2 not in condition_groups.get(rv_idx, (indicator2,)):
+                    return _NAN
+                else:
+                    return 0
 
         p1 = self.probability(indicator1, condition=condition)
         p2 = self.probability(indicator2, condition=condition)
@@ -267,12 +286,7 @@ class ProbabilitySpace(ABC):
             entropy of the given random variable.
         """
         condition = check_condition(condition)
-        e = 0.0
-        for ind in rv:
-            p = self.probability(ind, condition=condition)
-            if p > 0.0:
-                e -= p * math.log2(p)
-        return e
+        return -sum(plogp(self.probability(ind, condition=condition)) for ind in rv)
 
     def conditional_entropy(self, rv1: RandomVariable, rv2: RandomVariable, condition: Condition = ()) -> float:
         """
@@ -309,13 +323,11 @@ class ProbabilitySpace(ABC):
             joint entropy of the given random variables.
         """
         condition = check_condition(condition)
-        e = 0.0
-        for ind1 in rv1:
-            for ind2 in rv2:
-                p = self._joint_probability(ind1, ind2, condition=condition)
-                if p > 0.0:
-                    e -= p * math.log2(p)
-        return e
+        return -sum(
+            plogp(self._joint_probability(ind1, ind2, condition=condition))
+            for ind1 in rv1
+            for ind2 in rv2
+        )
 
     def mutual_information(self, rv1: RandomVariable, rv2: RandomVariable, condition: Condition = ()) -> float:
         """
@@ -419,8 +431,12 @@ class ProbabilitySpace(ABC):
         denominator = self.joint_entropy(rv1, rv2, condition=condition)
         return self._normalised_mutual_information(rv1, rv2, denominator, condition=condition)
 
-    def covariant_normalised_mutual_information(self, rv1: RandomVariable, rv2: RandomVariable,
-                                                condition: Condition = ()) -> float:
+    def covariant_normalised_mutual_information(
+            self,
+            rv1: RandomVariable,
+            rv2: RandomVariable,
+            condition: Condition = (),
+    ) -> float:
         """
         Calculate the covariant normalised mutual information
         = I(rv1; rv2) / sqrt(H(rv1) * H(rv2)).
@@ -547,6 +563,14 @@ class ProbabilitySpace(ABC):
                 return self.wmc(*indicators)
 
         return wmc
+
+
+def plogp(p: float) -> float:
+    """
+    Returns:
+        p * log2(p)
+    """
+    return p * math.log2(p) if p > 0 else 0
 
 
 def check_condition(condition: Condition) -> Tuple[Indicator, ...]:

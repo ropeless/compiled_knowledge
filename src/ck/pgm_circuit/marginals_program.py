@@ -308,6 +308,11 @@ class MarginalsProgram(ProgramWithSlotmap, ProbabilitySpace):
         The sampler will yield state lists, where the state
         values are co-indexed with rvs, or self.rvs if rvs is None.
 
+        For more information about this sampler, see the publication:
+        Suresh, S., Drake, B. (2025). Sampling of Large Probabilistic Graphical Models
+        Using Arithmetic Circuits. AI 2024: Advances in Artificial Intelligence. AI 2024.
+        Lecture Notes in Computer Science, vol 15443. https://doi.org/10.1007/978-981-96-0351-0_13.
+
         Args:
             rvs: the list of random variables to sample; the
                 yielded state vectors are co-indexed with rvs; if None,

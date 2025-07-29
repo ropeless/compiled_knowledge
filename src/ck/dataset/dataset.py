@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from typing import Sequence, Optional, Dict, Iterable, Tuple
+from itertools import repeat
+from typing import Sequence, Optional, Dict, Iterable, Tuple, List, Iterator
 
 import numpy as np
 
-from ck.pgm import RandomVariable, State
+from ck.pgm import RandomVariable, State, Instance
 from ck.utils.np_extras import DTypeStates, dtype_for_number_of_states, NDArrayNumeric, NDArrayStates
 
 
@@ -39,7 +40,7 @@ class Dataset:
         if weights.shape != expected_shape:
             raise ValueError(f'weights expected shape {expected_shape}, got {weights.shape}')
         # if not isinstance(weights.dtype, NDArrayNumeric):
-        #     raise ValueError(f'weights expected numeric dtype, got {weights.dtype}')
+        #     raise ValueError('weights expected numeric dtype')
 
         self._weights = weights
 
@@ -319,6 +320,26 @@ class HardDataset(Dataset):
 
         return self.add_rv_from_state_idxs(rv, rv_data)
 
+    def instances(self, rvs: Optional[Sequence[RandomVariable]] = None) -> Iterator[Tuple[Instance, float]]:
+        """
+        Iterate over weighted instances.
+
+        Args:
+            rvs: The random variables to include in iteration. Default is all dataset random variables.
+
+        Returns:
+            an iterator over (instance, weight) pairs, in the same order and number of instances in this dataset.
+            An instance is a sequence of state indexes, co-indexed with `self.rvs`.
+        """
+        if rvs is None:
+            rvs = self._rvs
+        # Special case - no random variables
+        if len(rvs) == 0:
+            return zip(repeat(()), self.weights)
+        else:
+            cols = [self.state_idxs(rv) for rv in rvs]
+            return zip(zip(*cols), self.weights)
+
     def dump(self, *, show_rvs: bool = True, show_weights: bool = True, as_states: bool = False) -> None:
         """
         Dump the dataset in a human-readable format.
@@ -333,8 +354,7 @@ class HardDataset(Dataset):
             rvs = ', '.join(str(rv) for rv in self.rvs)
             print(f'rvs: [{rvs}]')
         print(f'instances ({len(self)}, with total weight {self.total_weight()}):')
-        cols = [self.state_idxs(rv) for rv in self.rvs]
-        for instance, weight in zip(zip(*cols), self.weights):
+        for instance, weight in self.instances():
             if as_states:
                 instance_str = ', '.join(repr(rv.states[idx]) for idx, rv in zip(instance, self.rvs))
             else:
@@ -573,6 +593,52 @@ class SoftDataset(Dataset):
 
         return self.add_rv_from_state_weights(rv, rv_data)
 
+    def soft_instances(
+            self,
+            rvs: Optional[Sequence[RandomVariable]] = None,
+    ) -> Iterator[Tuple[Tuple[NDArrayNumeric], float]]:
+        """
+        Iterate over weighted instances  of soft evidence.
+
+        Args:
+            rvs: The random variables to include in iteration. Default is all dataset random variables.
+
+        Returns:
+            an iterator over (instance, weight) pairs, in the same order and number of instances in this dataset.
+            An instance is a sequence of soft weights, co-indexed with `self.rvs`.
+        """
+        if rvs is None:
+            rvs = self.rvs
+        # Special case - no random variables
+        if len(rvs) == 0:
+            return zip(repeat(()), self.weights)
+        else:
+            cols: List[NDArrayNumeric] = [self.state_weights(rv) for rv in rvs]
+            return zip(zip(*cols), self.weights)
+
+    def hard_instances(self, rvs: Optional[Sequence[RandomVariable]] = None) -> Iterator[Tuple[Instance, float]]:
+        """
+        Iterate over equivalent weighted hard instances.
+
+        Args:
+            rvs: The random variables to include in iteration. Default is all dataset random variables.
+
+        Returns:
+            an iterator over (instance, weight) pairs where the order and number of instances
+            is not guaranteed.
+            An instance is a sequence of state indexes, co-indexed with `self.rvs`.
+        """
+        if rvs is None:
+            rvs = self.rvs
+        # Special case - no random variables
+        if len(rvs) == 0:
+            yield (), self.total_weight()
+        else:
+            for instance_weights, weight in self.soft_instances(rvs):
+                if weight != 0:
+                    for instance, instance_weight in _product_instance_weights(instance_weights):
+                        yield instance, instance_weight * weight
+
     def dump(self, *, show_rvs: bool = True, show_weights: bool = True) -> None:
         """
         Dump the dataset in a human-readable format.
@@ -585,10 +651,32 @@ class SoftDataset(Dataset):
             rvs = ', '.join(str(rv) for rv in self.rvs)
             print(f'rvs: [{rvs}]')
         print(f'instances ({len(self)}, with total weight {self.total_weight()}):')
-        cols = [self.state_weights(rv) for rv in self.rvs]
-        for instance, weight in zip(zip(*cols), self.weights):
+        for instance, weight in self.soft_instances():
             instance_str = ', '.join(str(state_weights) for state_weights in instance)
             if show_weights:
                 print(f'({instance_str}) * {weight}')
             else:
                 print(f'({instance_str})')
+
+
+def _product_instance_weights(instance_weights: Sequence[NDArrayNumeric]) -> Iterator[Tuple[Tuple[int, ...], float]]:
+    """
+    Iterate over all possible hard instances for the given
+    instance weights, where the weight is not zero.
+
+    This is a support function for `SoftDataset.hard_instances`.
+    """
+
+    # Base case
+    if len(instance_weights) == 0:
+        yield (), 1
+
+    # Recursive case
+    else:
+        next_weights: NDArrayNumeric = instance_weights[-1]
+        pre_weights: Sequence[NDArrayNumeric] = instance_weights[:-1]
+        weight: float
+        for pre_instance, pre_weight in _product_instance_weights(pre_weights):
+            for i, weight in enumerate(next_weights):
+                if weight != 0:
+                    yield pre_instance + (int(i),), pre_weight * weight

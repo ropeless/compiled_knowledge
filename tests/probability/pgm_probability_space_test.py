@@ -161,7 +161,6 @@ class TestPGMProbabilitySpace(Fixture):
         ]
         self.assertArrayEqual(marginals, expect)
 
-
     def test_correlation(self):
         pgm = PGM()
         x = pgm.new_rv('x', ['a', 'b'])

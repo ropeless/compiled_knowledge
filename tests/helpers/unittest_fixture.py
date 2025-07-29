@@ -55,6 +55,9 @@ class Fixture(TestCase):
     def assertEmpty(self, got, *, msg=None):
         self.assertEqual(len(got), 0, msg=msg)
 
+    def assertNan(self, got, *, msg=None):
+        self.assertTrue(math.isnan(got), msg=msg)
+
     def assertArrayEqual(self, got, expect, *, msg=None, nan_equality: bool = False):
         self.assertEqual(len(got), len(expect), msg=msg)
         for (got_idx, got_item), (expect_idx, expect_item) in zip(_iter_index_value(got), _iter_index_value(expect)):

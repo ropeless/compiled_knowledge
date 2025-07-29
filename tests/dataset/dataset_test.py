@@ -1,6 +1,7 @@
 import numpy as np
 
 from ck.dataset import HardDataset, SoftDataset
+from ck.dataset.dataset_from_crosstable import expand_soft_dataset
 from ck.pgm import PGM
 from ck.utils.np_extras import NDArray
 from tests.helpers.unittest_fixture import Fixture, test_main

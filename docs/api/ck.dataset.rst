@@ -12,14 +12,6 @@ ck.dataset.cross\_table module
    :undoc-members:
    :show-inheritance:
 
-ck.dataset.cross\_table\_probabilities module
----------------------------------------------
-
-.. automodule:: ck.dataset.cross_table_probabilities
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 ck.dataset.dataset module
 -------------------------
 

@@ -4,10 +4,34 @@ ck.learning package
 Submodules
 ----------
 
-ck.learning.train\_generative module
-------------------------------------
+ck.learning.coalesce\_cross\_tables module
+------------------------------------------
 
-.. automodule:: ck.learning.train_generative
+.. automodule:: ck.learning.coalesce_cross_tables
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+ck.learning.model\_from\_cross\_tables module
+---------------------------------------------
+
+.. automodule:: ck.learning.model_from_cross_tables
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+ck.learning.parameters module
+-----------------------------
+
+.. automodule:: ck.learning.parameters
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+ck.learning.train\_generative\_bn module
+----------------------------------------
+
+.. automodule:: ck.learning.train_generative_bn
    :members:
    :undoc-members:
    :show-inheritance:

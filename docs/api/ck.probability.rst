@@ -4,6 +4,22 @@ ck.probability package
 Submodules
 ----------
 
+ck.probability.cross\_table\_probability\_space module
+------------------------------------------------------
+
+.. automodule:: ck.probability.cross_table_probability_space
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+ck.probability.divergence module
+--------------------------------
+
+.. automodule:: ck.probability.divergence
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 ck.probability.empirical\_probability\_space module
 ---------------------------------------------------
 

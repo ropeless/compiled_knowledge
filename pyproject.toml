@@ -22,7 +22,6 @@ classifiers = [
 [doc_extra]
 version_note = "A pre-release version of 4.1.0 that includes dataset and machine learning functionality for community feedback."
 
-
 [project.urls]
 Homepage = "https://github.com/ropeless/compiled_knowledge"
 Issues = "https://github.com/ropeless/compiled_knowledge/issues"

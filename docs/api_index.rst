@@ -1,4 +1,4 @@
-Indices
+Indexes
 =======
 
 * :ref:`genindex`

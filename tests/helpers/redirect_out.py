@@ -1,29 +1,26 @@
-"""
-Temporarily redirect sys.stdout (and maybe sys.stderr too).
-
-Usage:
-
-with redirect_out():
-    do_something_that_is_console_noisy()
-
-with redirect_out('tmp/output.txt'):
-    do_something_that_is_console_noisy()
-
-output = io.StringIO()
-with redirect_out(output):
-    do_something_that_is_console_noisy()
-capture = output.getvalue()
-
-"""
-__author__ = 'Barry Drake'
-
-
 import sys as _sys
 from os import devnull as _devnull
 from pathlib import Path as _Path
 
 
 class redirect_out:
+    """
+    Temporarily redirect sys.stdout (and maybe sys.stderr too).
+
+    Usage:
+
+    with redirect_out():
+        do_something_that_is_console_noisy()
+
+    with redirect_out('tmp/output.txt'):
+        do_something_that_is_console_noisy()
+
+    output = io.StringIO()
+    with redirect_out(output):
+        do_something_that_is_console_noisy()
+    capture = output.getvalue()
+
+    """
     __slots__ = ('_out', '_and_stderr', '_old_stdout', '_old_stderr', '_close_out')
 
     def __init__(self, out=None, and_stderr=False):

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import Enum, auto
 from typing import Sequence, Optional, Tuple, Dict, Protocol, assert_never
 
 import llvmlite.binding as llvm
@@ -15,9 +15,9 @@ from ..program.raw_program import RawProgramFunction
 
 
 class Flavour(Enum):
-    STACK = 0  # No working temporary memory requested - all on stack.
-    TMPS = 1  # Working temporary memory used for op node calculations.
-    FUNCS = 2  # Working temporary memory used for op node calculations, one sub-function per op-node.
+    STACK = auto()  # No working temporary memory requested - all on stack.
+    TMPS = auto()  # Working temporary memory used for op node calculations.
+    FUNCS = auto()  # Working temporary memory used for op node calculations, one sub-function per op-node.
 
 
 DEFAULT_TYPE_INFO: TypeInfo = DataType.FLOAT_64.value

@@ -3,7 +3,7 @@ This module supports circuit compilers and interpreters by inferring and checkin
 that are explicitly or implicitly referred to by a client.
 """
 
-from enum import Enum
+from enum import Enum, auto
 from itertools import chain
 from typing import Sequence, Optional, Set, Iterable, List
 
@@ -15,9 +15,9 @@ class InferVars(Enum):
     An enum specifying how to automatically infer a program's input variables.
     """
 
-    ALL = 'all'  # all circuit vars are input vars
-    REF = 'ref'  # only referenced vars are input vars
-    LOW = 'low'  # input vars are circuit vars[0 : max_referenced + 1]
+    ALL = auto()  # all circuit vars are input vars
+    REF = auto()  # only referenced vars are input vars
+    LOW = auto()  # input vars are circuit vars[0 : max_referenced + 1]
 
 
 # Type for specifying input circuit vars

@@ -1,6 +1,3 @@
-"""
-Unit test Fixture
-"""
 import math
 from importlib import import_module as _import
 from typing import Iterable, Optional, Mapping, Any, Iterator, Tuple

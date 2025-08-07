@@ -14,11 +14,10 @@ EXCLUDE_UNNECESSARY_CROSS_TABLES = True
 
 
 def main() -> None:
-    number_of_samples: int = 10000  # How many instances to make for the model dataset
-
     # Create a dataset based on model which is an example PGM
+    number_of_samples: int = 10000  # How many instances to make for the model dataset
     model: PGM = example.Student()
-    model_dataset = dataset_from_sampler(
+    model_dataset: HardDataset = dataset_from_sampler(
         WMCProgram(DEFAULT_PGM_COMPILER(model)).sample_direct(),
         number_of_samples,
     )

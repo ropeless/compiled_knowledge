@@ -22,9 +22,17 @@ def coalesce_cross_tables(crosstabs: Sequence[CrossTable], rvs: Sequence[RandomV
 
     `a` is a column vector with one entry for each instance of rvs seen in the cross-tables.
 
-    `b` is a column vector containing all probabilities from all cross-tables (normalised weights).
+    `b` is a column vector containing all probabilities from all cross-tables.
 
     `m` is a sparse matrix with m[i, j] = 1 where b[j] is in the sum for source probability a[i].
+
+    "Best" means the vector `a` with:
+    * `a[i] >= 0` for all i, then
+    * `b - m a` having the smallest L2 norm, then
+    * `a` having the smallest L2 norm.
+
+    The given crosstables will be used to form `b`. The entries each cross-table will be normalised
+    to represent a probability distribution over the cross-table's instances (keys).
 
     Args:
         crosstabs: a collection of cross-tables to coalesce.
@@ -171,8 +179,8 @@ def _make_matrix(
     Returns:
         the tuple (m, b, a_keys) where
         'm' is a sparse matrix,
-        'b' is a numpy array of crosstab probabilities,
-        'a_keys' are the keys for the solution probabilities.
+        'b' is a numpy array of crosstab probabilities (normalised as needed),
+        'a_keys' are the keys for the solution probabilities, co-indexed with `a`.
     """
 
     # Sum out any unneeded random variables

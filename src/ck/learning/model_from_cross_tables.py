@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import Enum, auto
 from itertools import chain
 from typing import Iterable, List, Tuple, Dict, Sequence, Set, Optional
 
@@ -12,7 +13,37 @@ from ck.pgm import PGM, RandomVariable
 from ck.utils.map_list import MapList
 
 
-def model_from_cross_tables(pgm: PGM, cross_tables: Iterable[CrossTable]) -> None:
+class ParameterInference(Enum):
+    """
+    There are variations on the method for inferring a CPT's parameter values.
+    This enum defines the possible variations.
+    """
+    first = auto()
+    """
+    Use the first cross-table found that covers the CPT's random variables.
+    If there is no such cross-table, revert to the `all` method.
+    This is the fastest method.
+    """
+
+    sum = auto()
+    """
+    Use the sum of cross-tables that cover the CPT's random variables.
+    If there are no such cross-tables, revert to the `all` method.
+    This is the second fastest method.
+    """
+
+    all = auto()
+    """
+    Project all cross-tables onto the needed random variables, then use
+    `coalesce_cross_tables` to solve for the best parameter values.
+    """
+
+
+def model_from_cross_tables(
+        pgm: PGM,
+        cross_tables: Iterable[CrossTable],
+        method: ParameterInference = ParameterInference.sum,
+) -> None:
     """
     Make best efforts to construct a Bayesian network model given only the
     evidence from the supplied cross-tables.
@@ -24,6 +55,7 @@ def model_from_cross_tables(pgm: PGM, cross_tables: Iterable[CrossTable]) -> Non
     Args:
         pgm: the PGM to add factors and potential function to.
         cross_tables: available cross-tables to build a model from.
+        method: what parameter inference method to use.
 
     Raises:
         ValueError: If `pgm` has any existing factors.
@@ -33,11 +65,16 @@ def model_from_cross_tables(pgm: PGM, cross_tables: Iterable[CrossTable]) -> Non
     cpts: List[CrossTable] = get_cpts(
         rvs=pgm.rvs,
         cross_tables=cross_tables,
+        method=method,
     )
     make_factors(pgm, cpts)
 
 
-def get_cpts(rvs: Sequence[RandomVariable], cross_tables: Iterable[CrossTable]) -> ParameterValues:
+def get_cpts(
+        rvs: Sequence[RandomVariable],
+        cross_tables: Iterable[CrossTable],
+        method: ParameterInference = ParameterInference.sum,
+) -> ParameterValues:
     """
     Make best efforts to define a Bayesian network model given only the
     evidence from the supplied cross-tables.
@@ -53,6 +90,7 @@ def get_cpts(rvs: Sequence[RandomVariable], cross_tables: Iterable[CrossTable]) 
     Args:
         rvs: the random variables to define a network structure over.
         cross_tables: available cross-tables to build a model from.
+        method: what parameter inference method to use.
 
     Returns:
         ParameterValues object as a list of CPTs, each CPT can be used to create
@@ -90,13 +128,17 @@ def get_cpts(rvs: Sequence[RandomVariable], cross_tables: Iterable[CrossTable]) 
     # Make the factors, depth first.
     done: Set[int] = set()
     for model_factor in model_factors:
-        _infer_cpt(model_factor, done)
+        _infer_cpt(model_factor, done, method)
 
     # Return the CPTs that define the structure
     return [model_factor.cpt for model_factor in model_factors]
 
 
-def _infer_cpt(model_factor: _ModelFactor, done: Set[int]) -> None:
+def _infer_cpt(
+        model_factor: _ModelFactor,
+        done: Set[int],
+        method: ParameterInference,
+) -> None:
     """
     Depth-first recursively infer the model factors as CPTs.
     This sets `model_factor.cpt` and `model_factor.parent_rvs` for
@@ -110,7 +152,7 @@ def _infer_cpt(model_factor: _ModelFactor, done: Set[int]) -> None:
 
     # Recursively visit the child factors
     for child_model_factor in model_factor.child_factors:
-        _infer_cpt(child_model_factor, done)
+        _infer_cpt(child_model_factor, done, method)
 
     # Get all relevant cross-tables to set the parameters
     crosstabs: Sequence[CrossTable] = model_factor.cross_tables
@@ -121,19 +163,20 @@ def _infer_cpt(model_factor: _ModelFactor, done: Set[int]) -> None:
 
     # Get the parameters
     rvs = [child_rv] + list(model_factor.parent_rvs)
-    crosstab: CrossTable = _infer_parameters(rvs, crosstabs, child_crosstabs)
+    crosstab: CrossTable = _infer_parameter_values(rvs, crosstabs, child_crosstabs, method)
     cpt, parent_sums = cpt_and_parent_sums_from_crosstab(crosstab)
     model_factor.cpt = cpt
     model_factor.parent_sums = parent_sums
 
 
-def _infer_parameters(
+def _infer_parameter_values(
         rvs: Sequence[RandomVariable],
         crosstabs: Sequence[CrossTable],
         child_crosstabs: Sequence[CrossTable],
+        method: ParameterInference,
 ) -> CrossTable:
     """
-    Make best efforts to infer a probability distribution over the give random variables,
+    Make best efforts to infer a probability distribution over the given random variables,
     with evidence from the given cross-tables.
 
     Returns:
@@ -144,8 +187,16 @@ def _infer_parameters(
         `rvs` has no duplicates.
     """
 
+    if method == ParameterInference.all:
+        # Forced to use all cross-tables with `coalesce_cross_tables`
+        projected_crosstabs: List[CrossTable] = [
+            crosstab.project(rvs)
+            for crosstab in chain(crosstabs, child_crosstabs)
+        ]
+        return coalesce_cross_tables(projected_crosstabs, rvs)
+
     # Project crosstables onto rvs, splitting them into complete and partial coverage of `rvs`.
-    # Completely covering cross-tables will be accumulated into `complete_crosstab` while others
+    # Completely covering cross-tables will be summed into `complete_crosstab` while others
     # will be appended to partial_crosstabs.
     complete_crosstab: Optional[CrossTable] = None
     partial_crosstabs: List[CrossTable] = []
@@ -153,10 +204,13 @@ def _infer_parameters(
         available_rvs: Set[RandomVariable] = set(available_crosstab.rvs)
         if available_rvs.issuperset(rvs):
             to_add: CrossTable = available_crosstab.project(rvs)
+            if method == ParameterInference.first:
+                # Take the first available solution.
+                return to_add
             if complete_crosstab is None:
                 complete_crosstab = to_add
             else:
-                complete_crosstab.add_all(to_add.project(rvs).items())
+                complete_crosstab.add_all(to_add.items())
         else:
             partial_crosstabs.append(available_crosstab)
 

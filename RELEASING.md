@@ -26,7 +26,7 @@ Prepare for a Release
 4. Run `tests/all_tests.py` for unit testing, confirming all unit tests pass.
 5. Run `ck_demos/all_demos.py` for smoke testing, confirming no errors are reported.
 6. Edit `pyproject.toml` to update the project version number (must do before building documentation).
-7. Run `python build_docs.py` and confirm the documentation builds okay.
+7. Run `build_docs.py` and confirm the documentation builds okay.
 8. View the documentation build to confirm it: [`docs/_build/html/index.html`](docs/_build/html/index.html).
 
 Only proceed if the "main" branch is ready for release.

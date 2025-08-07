@@ -3,6 +3,7 @@
 # Usage:
 #    python setup.py build_ext --inplace
 #    python setup.py sdist bdist_wheel
+#
 import sys
 from pathlib import Path
 from typing import List, Tuple

@@ -20,6 +20,14 @@ ck.utils.local\_config module
    :undoc-members:
    :show-inheritance:
 
+ck.utils.map\_dict module
+-------------------------
+
+.. automodule:: ck.utils.map_dict
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 ck.utils.map\_list module
 -------------------------
 

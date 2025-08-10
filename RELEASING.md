@@ -21,13 +21,14 @@ Prepare for a Release
 ---------------------
 
 1. Check out the "main" branch.
-2. Merge any new features and fixes for the release.
-3. Run `python setup.py build_ext --inplace` to compile Cython modules (must do before testing).
-4. Run `tests/all_tests.py` for unit testing, confirming all unit tests pass.
-5. Run `ck_demos/all_demos.py` for smoke testing, confirming no errors are reported.
-6. Edit `pyproject.toml` to update the project version number (must do before building documentation).
-7. Run `build_docs.py` and confirm the documentation builds okay.
-8. View the documentation build to confirm it: [`docs/_build/html/index.html`](docs/_build/html/index.html).
+2. Update dependencies, using `poetry update`.
+3. Merge any new features and fixes for the release.
+4. Run `python setup.py build_ext --inplace` to compile Cython modules (must do before testing).
+5. Run `tests/all_tests.py` for unit testing, confirming all unit tests pass.
+6. Run `ck_demos/all_demos.py` for smoke testing, confirming no errors are reported.
+7. Edit `pyproject.toml` to update the project version number (must do before building documentation).
+8. Run `build_docs.py` and confirm the documentation builds okay.
+9. View the documentation build to confirm it: [`docs/_build/html/index.html`](docs/_build/html/index.html).
 
 Only proceed if the "main" branch is ready for release.
 

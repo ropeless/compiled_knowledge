@@ -52,6 +52,9 @@ class Fixture(TestCase):
     def assertEmpty(self, got, *, msg=None):
         self.assertEqual(len(got), 0, msg=msg)
 
+    def assertNotEmpty(self, got, *, msg=None):
+        self.assertNotEqual(len(got), 0, msg=msg)
+
     def assertNan(self, got, *, msg=None):
         self.assertTrue(math.isnan(got), msg=msg)
 

@@ -245,7 +245,7 @@ def _init_llvm() -> None:
     """
     global __LLVM_INITIALISED
     if not __LLVM_INITIALISED:
-        llvm.initialize()
+        # llvm.initialize() Deprecated as of version 0.45
         llvm.initialize_native_target()
         llvm.initialize_native_asmprinter()
         __LLVM_INITIALISED = True

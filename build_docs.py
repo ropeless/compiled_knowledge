@@ -55,7 +55,7 @@ def main() -> None:
 
 def build_api_docs(ck_package_dir: Path, api_docs_dir: Path) -> None:
     """
-    Instantiate Markdown documents from found templates.
+    Build the API documentation from docstring comments.
 
     Args:
         ck_package_dir: where to find the CK Python packages.
@@ -71,7 +71,7 @@ def run_jupyter_book() -> None:
     """
     Run the Jupyter Book command to build the documentation.
     """
-    cmd: List[str] = ['jupyter-book', 'build', '-qq', 'docs']
+    cmd: List[str] = ['jupyter-book', 'build', '--quiet', 'docs']
     subprocess.run(cmd, capture_output=False, check=True)
 
 

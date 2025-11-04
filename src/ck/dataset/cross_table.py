@@ -38,6 +38,11 @@ class CrossTable(MutableMapping[Instance, float]):
         random variable states. That is, a Dirichlet prior of x results in x pseudocounts
         for each possible combination of states.
 
+        To copy a cross-table, `x`, you can use the following idiom:
+        ```
+            x_copy = CrossTable(x.rvs, update=x.items())
+        ```
+
         Args:
             rvs: the random variables that this cross-table records weights for. Instances
                 in this cross-table are tuples of state indexes, co-indexed with `rvs`.
@@ -123,7 +128,7 @@ class CrossTable(MutableMapping[Instance, float]):
     def items(self) -> Iterable[Tuple[Instance, float]]:
         """
         Returns:
-            an iterable over (instance, weight) pairs.
+            an iterable over (instance, weight) pairs, where weight != 0.
         """
         return self._dict.items()
 

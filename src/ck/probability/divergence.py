@@ -110,6 +110,11 @@ def hi(p: ProbabilitySpace, q: ProbabilitySpace) -> float:
     with state spaces X, is defined as:
         HI(P, Q) = sum(min(P(x), Q(x)) for x in X)
 
+    See:
+        Swain, M.J., Ballard, D.H. Color indexing.
+        International Journal of Computer Vision 7, 11–32 (1991).
+        https://doi.org/10.1007/BF00130487
+
     Args:
         p: a probability space to compare to.
         q: the other probability space.

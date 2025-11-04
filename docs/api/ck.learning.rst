@@ -12,6 +12,14 @@ ck.learning.coalesce\_cross\_tables module
    :undoc-members:
    :show-inheritance:
 
+ck.learning.conditioned\_cross\_table module
+--------------------------------------------
+
+.. automodule:: ck.learning.conditioned_cross_table
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 ck.learning.model\_from\_cross\_tables module
 ---------------------------------------------
 

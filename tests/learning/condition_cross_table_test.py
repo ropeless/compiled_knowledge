@@ -1,23 +1,21 @@
 from typing import Set
 
 from ck.dataset.cross_table import CrossTable
-from ck.learning.conditioned_cross_table import ConditionedCrossTable, condition
+from ck.learning.condition_cross_table import condition
 from ck.pgm import PGM, RandomVariable
 from tests.helpers.unittest_fixture import Fixture, test_main
 
 
-class TestConditionedCrossTable(Fixture):
+class TestConditionCrossTable(Fixture):
 
     def test_empty_cross_table(self):
-        cross_table = CrossTable(())
-        conditioned_crosstab = ConditionedCrossTable(cross_table, ())
+        conditioner = CrossTable(())
+        conditioned = CrossTable(())
 
-        reconditioned_crosstab = conditioned_crosstab.condition(cross_table)
+        reconditioned_crosstab = condition(conditioned, conditioner)
 
-        self.assertEmpty(reconditioned_crosstab.cross_table.rvs)
-        self.assertEmpty(reconditioned_crosstab.cross_table)
-        self.assertEmpty(reconditioned_crosstab.condition_rvs)
-        self.assertTrue(reconditioned_crosstab.is_unconditioned)
+        self.assertEmpty(reconditioned_crosstab.rvs)
+        self.assertEmpty(reconditioned_crosstab)
 
     def test_condition_no_project(self):
         # Create three Boolean random variables
@@ -107,7 +105,7 @@ class TestConditionedCrossTable(Fixture):
         b = pgm.new_rv('b', 2)
         c = pgm.new_rv('c', 2)
 
-        cross_table = CrossTable((a, b, c), update=(
+        conditioned = CrossTable((a, b, c), update=(
             ((0, 0, 0), 1),
             ((0, 0, 1), 2),
             ((0, 1, 0), 3),
@@ -125,13 +123,7 @@ class TestConditionedCrossTable(Fixture):
             ((1,), 52),
         ))
 
-        conditioned_crosstab = ConditionedCrossTable(cross_table, (a, b))
-
-        reconditioned_conditioned_crosstab = conditioned_crosstab.condition(conditioner)
-        reconditioned_crosstab = reconditioned_conditioned_crosstab.cross_table
-
-        self.assertFalse(reconditioned_conditioned_crosstab.is_unconditioned)
-        self.assertEqual(reconditioned_conditioned_crosstab.condition_rvs, (b,))
+        reconditioned_crosstab = condition(conditioned, conditioner)
 
         self.assertEqual(reconditioned_crosstab[(0, 0, 0)], 100)
         self.assertEqual(reconditioned_crosstab[(0, 0, 1)], 200)
@@ -150,7 +142,7 @@ class TestConditionedCrossTable(Fixture):
         b = pgm.new_rv('b', 2)
         c = pgm.new_rv('c', 2)
 
-        cross_table = CrossTable((a, b, c), update=(
+        conditioned = CrossTable((a, b, c), update=(
             ((0, 0, 0), 1),
             ((0, 0, 1), 2),
             ((0, 1, 0), 3),
@@ -168,13 +160,7 @@ class TestConditionedCrossTable(Fixture):
             ((1,), 52),
         ))
 
-        conditioned_crosstab = ConditionedCrossTable(cross_table, (a, b))
-
-        reconditioned_conditioned_crosstab = conditioned_crosstab.condition(conditioner, [a])
-        reconditioned_crosstab = reconditioned_conditioned_crosstab.cross_table
-
-        self.assertFalse(reconditioned_conditioned_crosstab.is_unconditioned)
-        self.assertEqual(reconditioned_conditioned_crosstab.condition_rvs, (b,))
+        reconditioned_crosstab = condition(conditioned, conditioner)
 
         self.assertEqual(reconditioned_crosstab[(0, 0, 0)], 100)
         self.assertEqual(reconditioned_crosstab[(0, 0, 1)], 200)
@@ -185,7 +171,6 @@ class TestConditionedCrossTable(Fixture):
         self.assertEqual(reconditioned_crosstab[(1, 0, 1)], 12)
         self.assertEqual(reconditioned_crosstab[(1, 1, 0)], 14)
         self.assertEqual(reconditioned_crosstab[(1, 1, 1)], 16)
-
 
     def test_condition_with_zeros(self):
         # Create three Boolean random variables

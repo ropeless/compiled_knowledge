@@ -1,7 +1,7 @@
 # _front matter_
 
-Compiled Knowledge version 4.2.0a2, built 2025-11-04 12:28:54 (AUS Eastern Summer Time).
-A pre-release version of 4.2.0 that includes enhancements for `synthorus`.
+Compiled Knowledge version 4.2.0, built 2025-11-07 11:51:17 (AUS Eastern Summer Time).
+
 
 These pages form a reference for the software known as Compiled Knowledge, abbreviated as CK.
 

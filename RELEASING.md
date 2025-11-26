@@ -9,7 +9,7 @@ with MAJOR.MINOR.PATCH [semantic versioning](https://semver.org/).
 
 Here are some example version identifiers that conform:
 * `4.5.6` a stable release,
-* `4.5.6a78` a prerelease.
+* `4.5.6a78` a prerelease of version `4.5.6`.
 
 Versions will be tagged in the repository using the version identifier as the label, prepended with "v".
 

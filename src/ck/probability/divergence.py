@@ -108,7 +108,9 @@ def hi(p: ProbabilitySpace, q: ProbabilitySpace) -> float:
 
     The histogram intersection between two probability spaces P and Q,
     with state spaces X, is defined as:
-        HI(P, Q) = sum(min(P(x), Q(x)) for x in X)
+    ```
+    HI(P, Q) = sum(min(P(x), Q(x)) for x in X)
+    ```
 
     See:
         Swain, M.J., Ballard, D.H. Color indexing.
@@ -153,17 +155,18 @@ def fhi(p: ProbabilitySpace, q: ProbabilitySpace) -> float:
     Compute the factored histogram intersection between this probability spaces and the given other.
 
     The factored histogram intersection between two probability spaces P and Q,
-    with state spaces X and factorisation F, is defined as:
+    with state spaces X and factorisation F, is defined as::
+
         FHI(P, Q) = 1/n sum(P(Y=y) CHI(P, Q, X | Y=y)
         where:
             CHI(P, Q, X | Y=y) = HI(P(X | Y=y), Q(X | Y=y))
             HI(P, Q) = sum(min(P(X=x), Q(X=x)) for x in f)
 
-    The value of _n_ is the sum ofP(Y=y) over all CPT rows. However,
+    The value of _n_ is the sum of P(Y=y) over all CPT rows. However,
     this always equals the number of CPTs, i.e., the number of random
     variables.
 
-    The factorisation F is taken from the `p`.
+    The factorisation F is taken from the probability space `p`.
 
     For more information about factored histogram intersection, see the publication:
     Suresh, S., Drake, B. (2025). Sampling of Large Probabilistic Graphical Models

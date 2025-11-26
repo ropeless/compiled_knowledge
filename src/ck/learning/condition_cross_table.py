@@ -19,15 +19,15 @@ def condition(
     Args:
         conditioned: the cross-table to condition.
         conditioner: the cross-table providing a distribution over condition random variables.
-        condition_rvs: Optional set of condition random variables. If not provided, then the intersection
+        condition_rvs: optional set of condition random variables. If not provided, then the intersection
             of `conditioned.rvs` and `conditioner.rvs` is used.
 
     Assumes:
         `condition_rvs_set` is a subset of `conditioned.rvs` and `conditioner.rvs`.
 
     Ensures:
-        for every instance, weight in conditioner.project(rvs):
-            conditioned.project(rvs)[instance] == weight
+        for every (instance, weight) in conditioner.project(rvs):
+        conditioned.project(rvs)[instance] == weight,
         where rvs = list(condition_rvs).
     """
     if condition_rvs is None:

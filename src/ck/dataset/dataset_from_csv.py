@@ -32,20 +32,20 @@ def hard_dataset_from_csv(
 
     Leading and trailing whitespace is ignored for each field, including header column names.
 
-    As text file (and StringIO) objects are iterable over lines, here is how to read a csv file:
-    ```
+    As text file (and StringIO) objects are iterable over lines, here is how to read a csv file::
+
         with open(csv_filename, 'r') as file:
             hard_dataset_from_csv(rvs, file)
-    ```
-    Here is an example to read from a csv string:
-    ```
+
+    Here is an example to read from a csv string::
+
         hard_dataset_from_csv(rvs, csv_string.splitlines())
-    ```
+
 
     Args:
         rvs: the random variables for the returned dataset.
         lines: the sequence of lines to interpret, each line is an instance in the dataset.
-        weights: the column in the csv file holding instance weights. Can be either the
+        weights: the column in the CSV file holding instance weights. Can be either the
             column number (counting from zero) or a column name (requires a header line).
         sep: the string to use to separate values in a line, default is a comma.
             If set to `None`, lines will be split on any consecutive run of whitespace characters

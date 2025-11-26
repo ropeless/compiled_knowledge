@@ -2,10 +2,11 @@
 # Learn more at https://jupyterbook.org/customize/toc.html
 
 format: jb-book
-root: 1_01_front_matter
+root: 0_00_exec_summary
 parts:
   - caption: Getting Started
     chapters:
+    - file: 1_01_front_matter
     - file: 1_02_introduction
     - file: 1_03_installation
     - file: 1_04_developer_community

@@ -1,6 +1,6 @@
 # _front matter_
 
-Compiled Knowledge version 4.2.0, built 2025-11-07 11:51:17 (AUS Eastern Summer Time).
+Compiled Knowledge version 4.2.0, built 2025-11-26 14:59:19 (AUS Eastern Summer Time).
 
 
 These pages form a reference for the software known as Compiled Knowledge, abbreviated as CK.
@@ -9,7 +9,7 @@ They are intended for users and developers of the software to help orient them
 to key design points and functionality of the software.
 
 Not all sections of this documentation will be relevant for all readers. As well as covering top-level
-organization and usage of Compiled Knowledge, these notebooks also covers some important implementation details.
+organization and usage of Compiled Knowledge, these notebooks also cover some important implementation details.
 
 This documentation is available online at
 [compiled-knowledge.readthedocs.io](https://compiled-knowledge.readthedocs.io/).

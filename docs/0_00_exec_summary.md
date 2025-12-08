@@ -1,4 +1,6 @@
-# Compiled Knowledge - executive summary #
+# Compiled Knowledge #
+
+_efficient inferencing with probabilistic graphical models_
 
 ## What it is ##
 

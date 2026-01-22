@@ -125,7 +125,7 @@ class WMCGibbsSampler(Sampler):
             prog_in[rv_slots[s]] = 0
             for slot_state, slot in candidates:
                 prog_in[slot] = 1
-                rv_pr[slot_state] = program_buffer.compute()
+                rv_pr[slot_state] = program_buffer.compute().item()
                 prog_in[slot] = 0
 
             # Pick a new state based on the conditional probabilities

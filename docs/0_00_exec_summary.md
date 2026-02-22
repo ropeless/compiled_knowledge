@@ -12,13 +12,13 @@ of random variables and captures the probabilistic relationships between them.
 
 The kinds of questions asked of a probabilistic model are things like, "What is the probability of some particular
 situation arising", or, "What is the most likely situation?" These questions are often asked in the context of
-know or assumed conditions.
+known or assumed conditions.
 
 Answering probabilistic questions can be hard, especially when there are many random variables and many 
 relationships in the model. _Knowledge compilation_ is a computer science technique of re-representing
 a probabilistic model in an alternative structure so that answering such questions is more efficient than
 working directly with the model. Compiling a probabilistic model into an alternative structure may be
-computationally expensive, but it is done when the cost is paid back via the many efficient queries that
+computationally expensive, but it is worthwhile when the cost is paid back via the many efficient queries that
 are subsequently made.
 
 Compiled Knowledge is a software library for creating, compiling and querying discrete probabilistic graphical models.

@@ -1,6 +1,6 @@
 # _front matter_
 
-Compiled Knowledge version 4.2.3, built 2026-02-23 09:03:50 (AUS Eastern Summer Time).
+Compiled Knowledge version 4.2.4, built 2026-04-30 07:44:51 (AUS Eastern Standard Time).
 
 
 These pages form a reference for the software known as Compiled Knowledge, abbreviated as CK.
